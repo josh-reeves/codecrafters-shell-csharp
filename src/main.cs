@@ -7,14 +7,12 @@ class Program
         bool replActive = true;
         string input;
 
-        Dictionary<string, string> commands =
-        [
-            
-            
-        ];
+        Dictionary<string, string> commands = new()
+        {
+            {"exit", "exit"}
 
-        commands.Add("exit", "exit");
-
+        };
+        
         while (replActive)
         {
             Console.Write("$ ");
