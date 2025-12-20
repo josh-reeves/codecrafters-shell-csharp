@@ -1,16 +1,35 @@
 class Program
 {
-    private const string invalidCommandMsg = ": command not found";
+    private const string invalidCmdMsg = ": command not found";
 
     static void Main()
     {
-        bool shellLoopActive = true;
+        bool replActive = true;
+        string input;
 
-        while (shellLoopActive)
+        Dictionary<string, string> commands =
+        [
+            
+            
+        ];
+
+        commands.Add("exit", "exit");
+
+        while (replActive)
         {
             Console.Write("$ ");
 
-            Console.WriteLine(Console.ReadLine() + invalidCommandMsg);
+            input = Console.ReadLine() ?? string.Empty;
+
+            if (input == commands["exit"])
+            {
+                replActive = false;
+
+                break;
+
+            }
+
+            Console.WriteLine(input + invalidCmdMsg);
 
         }
 
