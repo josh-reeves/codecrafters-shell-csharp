@@ -4,9 +4,15 @@ class Program
 
     static void Main()
     {
-        Console.Write("$ ");
+        bool shellLoopActive = true;
 
-        Console.WriteLine(Console.ReadLine() + invalidCommandMsg);
+        while (shellLoopActive)
+        {
+            Console.Write("$ ");
+
+            Console.WriteLine(Console.ReadLine() + invalidCommandMsg);
+
+        }
 
     }
 
