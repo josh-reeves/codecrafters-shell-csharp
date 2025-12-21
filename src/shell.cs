@@ -70,7 +70,7 @@ class Shell
             {
                 Process process = new();
 
-                process.StartInfo.FileName = path;
+                process.StartInfo.FileName = input[0];
 
                 for (int i = 1; i < input.Length; i ++ )
                 {
