@@ -80,6 +80,8 @@ class Shell
 
                 process.Start();
 
+                process.WaitForExit();
+
             }
             else
             {
