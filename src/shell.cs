@@ -146,13 +146,21 @@ class Shell
         
     }
 
-    private bool IsExecutable(string file)
+    private bool IsExecutable(string fileName)
     {
-        if (Search(file, PathList, out string path)) 
+        foreach(string dir in PathList)
         {
+            string file = dir + dirSep + fileName;
+
+            if (!File.Exists(file))
+            {
+                continue;
+
+            }
+
             if (!OperatingSystem.IsWindows())
             {
-                string fileMode = File.GetUnixFileMode(path).ToString().ToLower();
+                string fileMode = File.GetUnixFileMode(file).ToString().ToLower();
 
                 if (fileMode.Contains("execute"))
                 {
@@ -168,16 +176,26 @@ class Shell
     
     }
 
-    private bool IsExecutable(string file, out string path)
+    private bool IsExecutable(string fileName, out string path)
     {
-        if (Search(file, PathList, out path)) 
+        foreach(string dir in PathList)
         {
+            string file = dir + dirSep + fileName;
+
+            if (!File.Exists(file))
+            {
+                continue;
+
+            }
+
             if (!OperatingSystem.IsWindows())
             {
-                string fileMode = File.GetUnixFileMode(path).ToString().ToLower();
+                string fileMode = File.GetUnixFileMode(file).ToString().ToLower();
 
                 if (fileMode.Contains("execute"))
                 {
+                    path = file;
+
                     return true;
                     
                 }
@@ -186,39 +204,31 @@ class Shell
 
         }
 
+        path = string.Empty;
+
         return false;
     
     }
 
-    private string? Search(string file, IEnumerable<string> directories)
+    private IEnumerable<string>? Search(string file, IEnumerable<string> directories)
     {
+        List<string>? results = null;
+
         foreach (string dir in directories)
         {
             string path = dir + dirSep + file;
 
             if (File.Exists(path))
             {
-                return path;
+                results ??= new();
+
+                results.Add(path);
 
             }
         
         }
         
-        return null;
-
-    }
-
-    private bool Search(string file, IEnumerable<string> directories, out string path)
-    {
-        path = Search(file, directories) ?? string.Empty;
-
-        if (!string.IsNullOrEmpty(path))
-        {
-            return true;
-
-        }
-
-        return false;
+        return results;
 
     }
 
