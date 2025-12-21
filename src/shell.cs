@@ -105,6 +105,14 @@ class Shell
 
         }
 
+        if (Commands.Keys.Contains(input[1]))
+        {
+            Console.WriteLine(input[1] + builtinMsg);
+
+            return;
+            
+        }
+
         foreach(string dir in PathList)
         {
             string file = dir + dirSep + input[1];
@@ -117,14 +125,6 @@ class Shell
                 
             }
 
-        }
-
-        if (Commands.Keys.Contains(input[1]))
-        {
-            Console.WriteLine(input[1] + builtinMsg);
-
-            return;
-            
         }
 
         Console.WriteLine(input[1] + cmdNotFoundMsg);
