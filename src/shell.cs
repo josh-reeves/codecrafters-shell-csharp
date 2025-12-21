@@ -32,10 +32,11 @@ class Shell
         {
             {"exit", () => shellActive = false },
             {"echo", () => Echo() },
-            {"type", () => Type() }
+            {"type", () => Type() },
+            {"pwd", () => Console.WriteLine(Directory.GetCurrentDirectory()) },
+            {"cd", () => Echo() }
 
         };
-
 
     }
 
@@ -66,7 +67,7 @@ class Shell
                  Commands[input[0]]?.Invoke();
                
             }
-            else if (IsExecutable(input[0], out string path))
+            else if (IsExecutable(input[0]))
             {
                 Process process = new();
 
@@ -145,21 +146,13 @@ class Shell
         
     }
 
-    private bool IsExecutable(string fileName)
+    private bool IsExecutable(string file)
     {
-        foreach(string dir in PathList)
+        if (Search(file, PathList, out string path)) 
         {
-            string file = dir + dirSep + fileName;
-
-            if (!File.Exists(file))
-            {
-                continue;
-
-            }
-
             if (!OperatingSystem.IsWindows())
             {
-                string fileMode = File.GetUnixFileMode(file).ToString().ToLower();
+                string fileMode = File.GetUnixFileMode(path).ToString().ToLower();
 
                 if (fileMode.Contains("execute"))
                 {
@@ -175,26 +168,16 @@ class Shell
     
     }
 
-    private bool IsExecutable(string fileName, out string path)
+    private bool IsExecutable(string file, out string path)
     {
-        foreach(string dir in PathList)
+        if (Search(file, PathList, out path)) 
         {
-            string file = dir + dirSep + fileName;
-
-            if (!File.Exists(file))
-            {
-                continue;
-
-            }
-
             if (!OperatingSystem.IsWindows())
             {
-                string fileMode = File.GetUnixFileMode(file).ToString().ToLower();
+                string fileMode = File.GetUnixFileMode(path).ToString().ToLower();
 
                 if (fileMode.Contains("execute"))
                 {
-                    path = file;
-
                     return true;
                     
                 }
@@ -203,12 +186,41 @@ class Shell
 
         }
 
-        path = string.Empty;
-
         return false;
     
     }
 
+    private string? Search(string file, IEnumerable<string> directories)
+    {
+        foreach (string dir in directories)
+        {
+            string path = dir + dirSep + file;
+
+            if (File.Exists(path))
+            {
+                return path;
+
+            }
+        
+        }
+        
+        return null;
+
+    }
+
+    private bool Search(string file, IEnumerable<string> directories, out string path)
+    {
+        path = Search(file, directories) ?? string.Empty;
+
+        if (!string.IsNullOrEmpty(path))
+        {
+            return true;
+
+        }
+
+        return false;
+
+    }
 
 #endregion
     
