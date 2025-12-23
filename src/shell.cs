@@ -1,5 +1,8 @@
+using System.Collections;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO.Enumeration;
+using System.Reflection.Metadata;
 
 namespace Shell;
 
@@ -9,13 +12,14 @@ class Shell
     private const char cmdSep = ' ';
     private const string pathVar = "PATH",
                          invalidCmdMsg = ": command not found",
-                         builtinMsg = " is a shell builtin";
+                         builtinMsg = " is a shell builtin",
+                         invalidDirMsg = ": No such file or directory";
 
     private char pathSep,
                  dirSep;
     private bool shellActive;
 
-    private string[] input;
+    private List<string> input;
 
 #endregion
         
@@ -34,7 +38,7 @@ class Shell
             {"echo", () => Echo() },
             {"type", () => Type() },
             {"pwd", () => Console.WriteLine(Directory.GetCurrentDirectory()) },
-            {"cd", () => Echo() }
+            {"cd", () => ChangeDirectory() }
 
         };
 
@@ -60,7 +64,7 @@ class Shell
         {
             Console.Write("$ ");
 
-            input = Console.ReadLine()?.Split(cmdSep) ?? [ string.Empty ];
+            input = Parse(Console.ReadLine() ?? string.Empty, [cmdSep], new(){{'"','"'}});  ;
 
             if (Commands.Keys.Contains(input[0]))
             {
@@ -73,7 +77,7 @@ class Shell
 
                 process.StartInfo.FileName = input[0];
 
-                for (int i = 1; i < input.Length; i ++ )
+                for (int i = 1; i < input.Count; i ++ )
                 {
                     process.StartInfo.ArgumentList.Add(input[i]);
 
@@ -96,11 +100,11 @@ class Shell
 
     private void Echo()
     {
-        for (int i = 1; i < input .Length; i++)
+        for (int i = 1; i < input.Count; i++)
         {
             Console.Write(input[i]);
 
-            if (i == input.Length - 1)
+            if (i == input.Count - 1)
             {
                 Console.Write("\r\n");
             }
@@ -118,7 +122,7 @@ class Shell
     {
         const string cmdNotFoundMsg = ": not found";
 
-        if (input.Length <= 1)
+        if (input.Count <= 1)
         {
             Console.WriteLine(cmdNotFoundMsg);
 
@@ -143,6 +147,30 @@ class Shell
         }
 
         Console.WriteLine(input[1] + cmdNotFoundMsg);   
+        
+    }
+
+    private void ChangeDirectory()
+    {
+        if (input[1] == "~")
+        {
+            string userFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            Directory.SetCurrentDirectory(userFolder);
+            
+        }
+        else if (!Directory.Exists(input[1]))
+        {
+            Console.WriteLine(input[1] + invalidDirMsg);
+
+            return;
+
+        }
+        else if (Directory.Exists(input[1]))
+        {
+            Directory.SetCurrentDirectory(input[1]);
+            
+        }
         
     }
 
@@ -231,6 +259,50 @@ class Shell
         return results;
 
     }
+
+    private List<string> Parse(string input, IList<char> separators, Dictionary<char, char>? delimiterPairs = null)
+    {
+        List<string> parsedInput = new();
+        string str = string.Empty;
+
+        // This works for now, but it's super gross.
+        for(int i = 0; i < input.Length; i++)
+        {
+            // We don't want to add the character if it's a delimiter or a separator.
+            if (!separators.Contains(input[i]) && !(delimiterPairs?.Keys.Contains(input[i]) ?? false))
+            {
+                str += input[i];
+            
+            }
+
+            if (delimiterPairs?.Keys.Contains(input[i]) ?? false)
+            {
+                char tmp = input[i];
+
+                i++;
+
+                while(i < input.Length && (input[i] != delimiterPairs[tmp] || input[i - 1] == '\\'))
+                {
+                    str += input[i];
+
+                    i++;
+
+                }
+
+            }
+            
+            if (i >= input.Length - 1 || separators.Contains(input[i]))
+            {
+                parsedInput.Add(str);
+                str = string.Empty;
+                
+            }
+            
+        }
+
+        return parsedInput;
+        
+    }    
 
 #endregion
     
