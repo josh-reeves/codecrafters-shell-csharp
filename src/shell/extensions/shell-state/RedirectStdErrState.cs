@@ -2,9 +2,9 @@ using Interfaces;
 
 namespace Shell.Extensions.ShellState;
 
-public class RedirectStdErr : IState
+public class RedirectStdErrState : IState
 {
-    public RedirectStdErr() {}
+    public RedirectStdErrState() {}
 
     public IStateController? Controller { get; set; }
 

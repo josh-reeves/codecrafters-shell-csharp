@@ -10,7 +10,6 @@ public class ShellStateController : IStateController
     {
         Shell = shell;
         CurrentState = defaultState = initialState;
-        Transitions = new();
         
         if (initialState.Controller is null)
             initialState.Controller = this;
@@ -21,21 +20,13 @@ public class ShellStateController : IStateController
 
     public IState CurrentState { get; private set;}
 
-    public Dictionary<IState, HashSet<IState>> Transitions { get; private set;}
-
     public void Transition(IState state)
     {
         try
         {
-            if (!Transitions[CurrentState].TryGetValue(state, out IState? newState))
-            {
-                return;
-
-            }
-
             CurrentState.Exit();
 
-            CurrentState = newState;
+            CurrentState = state;
 
             CurrentState.Enter();
 

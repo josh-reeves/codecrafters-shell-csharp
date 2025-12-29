@@ -1,7 +1,7 @@
 using Interfaces;
 using Shell.Commands;
 using Shell.Extensions;
-using Shell.Extensions.ShellState;
+using Shell.Extensions.Parser;
 using Type = Shell.Commands.Type;
 
 namespace Shell;
@@ -25,29 +25,18 @@ public class Shell : IShell
 
         environment = new ShellEnvironment(
             this, 
-            new Parser(), 
+            new Parser([], []), 
             ' ', 
             '~', 
-            "PATH", 
-            new ShellStateController(this, new DefaultState()),
-            new Dictionary<string, IState>()
-            {
-                {">", new RedirectStdOut()},
-                {">>", new AppendStdOut()}
+            "PATH");
 
-            });
+        environment.Parser.Separators.Add(environment.CommandSeparator);
 
         environment.Commands.Add("exit", new Exit(environment));
         environment.Commands.Add("echo", new Echo(environment));
         environment.Commands.Add("type", new Type(environment));
         environment.Commands.Add("pwd", new PrintWorkingDirectory(environment));
         environment.Commands.Add("cd", new ChangeDirectory(environment));
-
-        environment.Controller?.Transitions.Add(new DefaultState(), [new DefaultState(), new RedirectStdOut(), new RedirectStdErr(), new AppendStdOut(), new AppendStdErr()]);
-        environment.Controller?.Transitions.Add(new RedirectStdOut(), [new DefaultState(), new RedirectStdErr(), new AppendStdOut(), new AppendStdErr()]);
-        environment.Controller?.Transitions.Add(new RedirectStdErr(), [new DefaultState(), new RedirectStdOut(), new AppendStdOut(), new AppendStdErr()]);
-        environment.Controller?.Transitions.Add(new AppendStdOut(), [new DefaultState(), new RedirectStdOut(), new RedirectStdErr(), new AppendStdErr()]);
-        environment.Controller?.Transitions.Add(new AppendStdErr(), [new DefaultState(), new RedirectStdOut(), new RedirectStdErr(), new AppendStdOut()]);
 
         tokenizedInput = new();
 
@@ -69,20 +58,25 @@ public class Shell : IShell
 
         while (environment.ShellIsActive)
         {
+            tokenizedInput.Clear();
+
             Console.Write("$ ");
 
             string rawInput = Console.ReadLine() ?? string.Empty;
 
-            if (string.IsNullOrEmpty(rawInput))
+            if (string.IsNullOrWhiteSpace(rawInput))
             {
-                return;
+                continue;
 
             }
 
-            tokenizedInput = (List<string>)environment.Parser.Parse(
-                rawInput, 
-                [environment.CommandSeparator], 
-                groupDelimiters: new Dictionary<char, char>{{'"', '"'}}); 
+            foreach(IToken token in environment.Parser.Tokenize(rawInput, new ParserStateController(environment.Parser, new ParserDefaultState())))
+            {
+                tokenizedInput.Add(token.Value);
+                
+            };
+
+            Console.WriteLine(tokenizedInput.Count);
 
             command = tokenizedInput[0];
             Args = tokenizedInput[1..tokenizedInput.Count];

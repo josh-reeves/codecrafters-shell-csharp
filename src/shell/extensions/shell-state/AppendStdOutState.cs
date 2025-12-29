@@ -2,9 +2,9 @@ using Interfaces;
 
 namespace Shell.Extensions.ShellState;
 
-public class AppendStdErr : IState
+public class AppendStdOutState : IState
 {
-    public AppendStdErr() {}
+    public AppendStdOutState() {}
 
     public IStateController? Controller { get; set; }
 
