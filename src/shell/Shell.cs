@@ -1,109 +1,84 @@
 using Interfaces;
 using Shell.Commands;
-using Shell.Extensions;
 using Shell.Extensions.Parser;
+using Shell.Extensions.Parser.State;
+using Shell.State;
 using Type = Shell.Commands.Type;
 
 namespace Shell;
 
 public class Shell : IShell
 {
-#region Fields
-    private const string invalidCmdMsg = ": command not found";
-    private string command;
+    #region Fields
+    private ShellStateController controller;
 
-    private ShellEnvironment environment;
+    #endregion
 
-    private List<string> tokenizedInput;
-
-#endregion
-
-#region Constructor(s)
+    #region Constructor(s)
     public Shell()
-    {
-        command = string.Empty;
+    {        
+        Command = string.Empty;
+        Filename = string.Empty;
+        Args = [];
+        Parser = new Parser();
+        ShellEnvironment = new ShellEnvironment(this, ' ', '~', "PATH");
 
-        environment = new ShellEnvironment(
-            this, 
-            new Parser([], []), 
-            ' ', 
-            '~', 
-            "PATH");
+        controller = new(this, new ShellInputState());
 
-        environment.Parser.Separators.Add(environment.CommandSeparator);
+        Parser.Separators.Add(ShellEnvironment.CommandSeparator);
+        Parser.GroupDelimiters.Add('\'', new ParserGroupDelimiterState('\''));
+        Parser.GroupDelimiters.Add('"', new ParserGroupDelimiterState('"'));
+        Parser.Operators.Add(">", new ParserRedirectStdOutState(">"));
+        Parser.Operators.Add("1>", new ParserRedirectStdOutState("1>"));
 
-        environment.Commands.Add("exit", new Exit(environment));
-        environment.Commands.Add("echo", new Echo(environment));
-        environment.Commands.Add("type", new Type(environment));
-        environment.Commands.Add("pwd", new PrintWorkingDirectory(environment));
-        environment.Commands.Add("cd", new ChangeDirectory(environment));
-
-        tokenizedInput = new();
-
-        Args = new List<string>();
+        ShellEnvironment.Commands.Add("exit", new Exit(ShellEnvironment));
+        ShellEnvironment.Commands.Add("echo", new Echo(ShellEnvironment));
+        ShellEnvironment.Commands.Add("type", new Type(ShellEnvironment));
+        ShellEnvironment.Commands.Add("pwd", new PrintWorkingDirectory(ShellEnvironment));
+        ShellEnvironment.Commands.Add("cd", new ChangeDirectory(ShellEnvironment));
 
     }
 
-#endregion
+    #endregion
 
-#region Properties
-    public IList<string>? Args { get; private set;}
+    #region Properties
+    public string Command { get; set; }
 
-#endregion
+    public string Filename { get; set; }
 
-#region Methods
+    public IShellEnvironment ShellEnvironment { get; private set; }
+
+    public IParser Parser { get; private set;}
+
+    public StreamWriter? OutputWriter { get; set; }
+
+    public IList<string> Args { get; set; }
+
+    #endregion
+
+    #region Methods
     public void Run()
     {
-        environment.ShellIsActive = true;
+        ShellEnvironment.ShellIsActive = true;
 
-        while (environment.ShellIsActive)
+        while (ShellEnvironment.ShellIsActive)
         {
-            tokenizedInput.Clear();
-
-            Console.Write("$ ");
-
-            string rawInput = Console.ReadLine() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(rawInput))
+            try
             {
-                continue;
+               controller.CurrentState.Execute();
+             
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
 
             }
-
-            foreach(IToken token in environment.Parser.Tokenize(rawInput, new ParserStateController(environment.Parser, new ParserDefaultState())))
-            {
-                tokenizedInput.Add(token.Value);
-                
-            };
-
-            Console.WriteLine(tokenizedInput.Count);
-
-            command = tokenizedInput[0];
-            Args = tokenizedInput[1..tokenizedInput.Count];
-
-            if (environment.Commands.Keys.Contains(command))
-            {
-                 environment.Commands[command]?.Execute(Args.ToArray());
-
-                 continue;
-               
-            }
-
-            if (environment.IsExecutable(environment.Search(command,environment.PathList).ToArray()))
-            {
-                environment.ExecuteExternal(command, Args.ToArray());
-            
-                continue;
-                
-            }
-
-            Console.WriteLine(command + invalidCmdMsg);
 
         }
 
     }
 
-#endregion
+    #endregion
         
 }
 

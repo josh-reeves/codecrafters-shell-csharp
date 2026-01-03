@@ -4,16 +4,22 @@ namespace Shell.Extensions.Parser;
 
 public class Parser : IParser
 {
-    public Parser(IList<char> separators, IList<string> operators)
+    public Parser()
     {
-        Separators = separators;
-        Operators = operators;
+        Separators = [];
+        TokenizedInput =[];
+        Operators = new Dictionary<string, IState>();
+        GroupDelimiters = new Dictionary<char, IState>();
         
     }
 
     public IList<char> Separators { get; set;}
 
-    public IList<string> Operators { get; set; }
+    public IList<IToken> TokenizedInput { get; set; }
+
+    public IDictionary<string, IState> Operators { get; }
+
+    public IDictionary<char, IState> GroupDelimiters { get; }
 
     public IList<IToken> Tokenize(string input, IParserStateController controller)
     {
@@ -35,5 +41,4 @@ public class Parser : IParser
 
     }
 
-    
 }

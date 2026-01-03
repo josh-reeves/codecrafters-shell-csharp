@@ -6,7 +6,11 @@ public interface IParser
 {
     public IList<char> Separators { get; set;}
 
-    public IList<string> Operators { get; set; }
+    public IList<IToken> TokenizedInput { get; set; }
+
+    public IDictionary<string, IState> Operators { get; }
+
+    public IDictionary<char, IState> GroupDelimiters { get;}
 
     /// <summary>
     /// Lexes input string into a series of tokens.

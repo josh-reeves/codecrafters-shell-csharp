@@ -1,12 +1,10 @@
 using Interfaces;
 
-namespace Shell.Extensions.Parser;
+namespace Shell.Extensions.Parser.State;
 
 public class ParserSeparatorState : ParserState
 {
     public ParserSeparatorState() {}
-
-    public ParserSeparatorState(IParserStateController stateController) : base(stateController) {}
 
     public override void Execute()
     {
@@ -18,19 +16,13 @@ public class ParserSeparatorState : ParserState
 
         if (!controller.Parser.Separators.Contains(controller.RemainingText[0]))
         {
-            controller.Transition(new ParserDefaultState(controller));
+            controller.Transition(new ParserDefaultState());
 
             return;
 
         }
 
         controller.RemainingText = controller.RemainingText[1..];
-
-        if (string.IsNullOrWhiteSpace(controller.RemainingText))
-        {
-            controller.Transition(new ParserEOFState(controller));
-            
-        }
         
     }
 

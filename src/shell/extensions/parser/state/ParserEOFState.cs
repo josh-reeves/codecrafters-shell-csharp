@@ -1,13 +1,11 @@
 using Interfaces;
 
-namespace Shell.Extensions.Parser;
+namespace Shell.Extensions.Parser.State;
 
 public class ParserEOFState : ParserState
 {
     public ParserEOFState() {}
     
-    public ParserEOFState(IParserStateController stateController) : base(stateController) {}
-
     public override void Enter() 
     {
         if (Controller is not ParserStateController controller)

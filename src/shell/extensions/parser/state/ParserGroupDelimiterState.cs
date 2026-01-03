@@ -1,13 +1,17 @@
 using Interfaces;
 using Shell.Extensions.Parser.Tokens;
 
-namespace Shell.Extensions.Parser;
+namespace Shell.Extensions.Parser.State;
 
-public class ParserDefaultState : ParserState
+public class ParserGroupDelimiterState : ParserState
 {
-    public ParserDefaultState() {}
+    private char terminator;
 
-    public ParserDefaultState(IParserStateController stateController) : base(stateController) {}
+    public ParserGroupDelimiterState(char terminatorChar)
+    {
+        terminator = terminatorChar;
+
+    }
 
     public override void Enter()
     {
@@ -21,17 +25,12 @@ public class ParserDefaultState : ParserState
 
     }
 
-    public override void Execute() 
+    public override void Execute()
     {
         if (Controller is not ParserStateController controller || controller.CurrentToken is null)
-            return;
-
-        if (controller.Parser.Separators.Contains(controller.RemainingText[0]))
         {
-            controller.Transition(new ParserSeparatorState(controller));
-
             return;
-            
+
         }
 
         controller.CurrentToken.Value += controller.RemainingText[0];
@@ -40,21 +39,33 @@ public class ParserDefaultState : ParserState
 
         if (string.IsNullOrWhiteSpace(controller.RemainingText))
         {
-            controller.Transition(new ParserEOFState(controller));
+            controller.Transition(new ParserEOFState());
             
+            return;
         }
-        
+
+        if (controller.RemainingText[0] == terminator)
+        {
+            controller.CurrentToken.Value += controller.RemainingText[0];
+            controller.RemainingText = controller.RemainingText[1..];
+
+            controller.Transition(new ParserDefaultState());
+
+            return;
+
+        }
+
     }
 
     public override void Exit()
     {
-        if (Controller is not ParserStateController controller)
+        if (Controller is not ParserStateController controller || controller.CurrentToken is null)
         {
             return;
 
         }
 
-        if (string.IsNullOrWhiteSpace(controller.CurrentToken?.Value))
+        if (string.IsNullOrWhiteSpace(controller.CurrentToken.Value))
         {
             return;
             

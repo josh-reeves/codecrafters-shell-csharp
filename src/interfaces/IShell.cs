@@ -2,8 +2,18 @@ namespace Interfaces;
 
 public interface IShell
 {
-    public void Run();
+    public string Command { get; set; }
 
-    public IList<string>? Args { get; }
+    public string Filename { get; set; }
+
+    public IShellEnvironment ShellEnvironment { get; }
+
+    public IParser Parser { get; }
+
+    public StreamWriter? OutputWriter { get; set; }
+
+    public IList<string> Args { get; set; }
+
+    public void Run();
 
 }

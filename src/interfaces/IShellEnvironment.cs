@@ -4,6 +4,8 @@ public interface IShellEnvironment
 {
     public bool ShellIsActive { get; set; }
 
+    public bool IsOutputRedirected { get; set; }
+
     public char CommandSeparator { get; }
 
     public char HomeChar { get; }
@@ -16,11 +18,7 @@ public interface IShellEnvironment
 
     public string HomeDir { get; }
 
-    public IParser Parser { get; }
-
-    public IStateController? Controller { get; }
-
-    public IDictionary<string, IState>? ControlSequences { get; }
+    public string InvalidCmdMsg { get; }
 
     public IList<string> PathList { get; }
 

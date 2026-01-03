@@ -1,6 +1,6 @@
 using Interfaces;
 
-namespace Shell.Extensions.ShellState;
+namespace Shell.State;
 
 public class AppendStdOutState : IState
 {

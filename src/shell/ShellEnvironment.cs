@@ -1,24 +1,28 @@
 using System.Diagnostics;
 using Interfaces;
 
-namespace Shell.Extensions;
+namespace Shell;
 
 public class ShellEnvironment : IShellEnvironment
 {
-    public ShellEnvironment(IShell shell, IParser parser, char cmdSep, char homeChar, string pathVar, IStateController? controller = null, IDictionary<string, IState>? controlSequences = null)
+    #region Constructor(s)
+    public ShellEnvironment(IShell shell, char cmdSep, char homeChar, string pathVar)
     {
         CommandSeparator = cmdSep;
         HomeChar = homeChar;
         PathVar = pathVar;
         Shell = shell;
-        Parser = parser;
-        Controller = controller;
-        ControlSequences = controlSequences;
+        InvalidCmdMsg = ": command not found";
         Commands = new Dictionary<string, IShellCommand>();
 
     }
 
+    #endregion
+
+    #region Properties
     public bool ShellIsActive { get; set; }
+
+    public bool IsOutputRedirected { get; set; }
 
     public char CommandSeparator { get; private set; }
     
@@ -32,32 +36,44 @@ public class ShellEnvironment : IShellEnvironment
 
     public string HomeDir { get => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); }
 
+    public string InvalidCmdMsg { get; private set; }
+
     public IShell Shell { get; private set; }
-
-    public IParser Parser { get; private set; }
-
-    public IStateController? Controller { get; private set; }
 
     public IList<string> PathList { get => Path.Split(PathSeparator).ToList(); }
 
-    public IDictionary<string, IState>? ControlSequences { get; private set; }
-
     public IDictionary<string, IShellCommand> Commands { get; private set; }
 
+    #endregion
+
+    #region Methods
     public void ExecuteExternal(string executable, string[] args)
     {
-        char cmdSep = ' ';
-
         Process process = new();
-
-        process.StartInfo = new()
+        ProcessStartInfo startInfo = new()
         {
             FileName = executable,
-            Arguments = string.Join(cmdSep, args)
-
+            Arguments = string.Join(CommandSeparator, args)
+            
         };
 
+        if (IsOutputRedirected)
+        {
+            startInfo.UseShellExecute = false;
+            startInfo.RedirectStandardOutput = true;
+
+        }
+
+        process.StartInfo = startInfo;
+
         process.Start();
+
+        if (IsOutputRedirected)
+        {
+            string output = process.StandardOutput.ReadToEnd();
+            Shell.OutputWriter?.Write(output);
+
+        }
 
         process.WaitForExit();
 
@@ -106,5 +122,7 @@ public class ShellEnvironment : IShellEnvironment
         return results;
         
     }
+
+    #endregion
 
 }
