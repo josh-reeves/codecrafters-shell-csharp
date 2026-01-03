@@ -26,8 +26,6 @@ public class Shell : IShell
         controller = new(this, new ShellInputState());
 
         Parser.Separators.Add(ShellEnvironment.CommandSeparator);
-        Parser.GroupDelimiters.Add('\'', new ParserGroupDelimiterState('\''));
-        Parser.GroupDelimiters.Add('"', new ParserGroupDelimiterState('"'));
         Parser.Operators.Add(">", new ParserRedirectStdOutState(">"));
         Parser.Operators.Add("1>", new ParserRedirectStdOutState("1>"));
 
