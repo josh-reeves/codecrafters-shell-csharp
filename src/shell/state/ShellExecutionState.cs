@@ -19,14 +19,14 @@ public class ShellExecutionState : ShellState
 
         IShell shell = controller.Shell;
 
-        if (shell.ShellEnvironment.Commands.Keys.Contains(shell.Parser.TokenizedInput[0].Value))
+        if (shell.Commands.Keys.Contains(shell.Parser.TokenizedInput[0].Value))
         {
-            shell.ShellEnvironment.Commands[shell.Parser.TokenizedInput[0].Value]?.Execute(shell.Args.ToArray());
+            shell.Commands[shell.Parser.TokenizedInput[0].Value]?.Execute(shell.Args.ToArray());
 
         }
-        else if (shell.ShellEnvironment.IsExecutable(shell.ShellEnvironment.Search(shell.Command, shell.ShellEnvironment.PathList).ToArray()))
+        else if (shell.IsExecutable(shell.Search(shell.Command, shell.PathList).ToArray()))
         {
-            shell.ShellEnvironment.ExecuteExternal(shell.Command, shell.Args.ToArray());
+            shell.ExecuteExternal(shell.Command, shell.Args.ToArray());
             
         }
         else

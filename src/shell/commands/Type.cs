@@ -8,7 +8,7 @@ public class Type : ShellCommand
                             builtinMsg = " is a shell builtin";
 
 
-    public Type(IShellEnvironment environment) : base(environment) {}
+    public Type(IShell shell) : base(shell) {}
 
     public override void Execute(object[]? args)
     {
@@ -20,7 +20,7 @@ public class Type : ShellCommand
 
         string arg = args[0] as string ?? string.Empty;
 
-        if (Environment.Commands.Keys.Contains(arg))
+        if (Shell.Commands.Keys.Contains(arg))
         {
             Console.WriteLine(arg + builtinMsg);
 
@@ -28,9 +28,9 @@ public class Type : ShellCommand
             
         }
 
-        foreach (string result in Environment.Search(arg, Environment.PathList))
+        foreach (string result in Shell.Search(arg, Shell.PathList))
         {
-            if (Environment.IsExecutable([result]))
+            if (Shell.IsExecutable([result]))
             {
                 Console.WriteLine(args[0] + " is " + result);
 

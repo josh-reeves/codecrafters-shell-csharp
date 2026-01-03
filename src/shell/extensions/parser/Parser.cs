@@ -34,6 +34,18 @@ public class Parser : IParser
         return controller.ParsedTokens;
 
     }
+
+    public IList<IToken> Expand(IList<IToken> tokens)
+    {
+        foreach (IToken token in tokens)
+        {
+            token.ExpandedValue = token.Value.Trim('"', '\'');
+
+        }
+
+        return tokens;
+
+    }
    
     public IEnumerator<string> Parse()
     {

@@ -9,6 +9,7 @@ public class FilenameToken : IToken
     public FilenameToken()
     {
         Value = string.Empty;
+        ExpandedValue = string.Empty;
 
     }
 
@@ -16,6 +17,8 @@ public class FilenameToken : IToken
 
     #region Properties
     public string Value { get; set;}
+
+    public string ExpandedValue { get; set; }
 
     #endregion 
 

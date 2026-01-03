@@ -5,13 +5,13 @@ namespace Shell.Commands;
 
 public abstract class ShellCommand : IShellCommand
 {
-    public ShellCommand(IShellEnvironment environment)
+    public ShellCommand(IShell shell)
     {
-        Environment = environment;
+        Shell = shell;
 
     }
 
-    protected IShellEnvironment Environment { get; set; }
+    protected IShell Shell { get; set; }
 
     public abstract void Execute(object[]? args);   
 

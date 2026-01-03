@@ -16,19 +16,7 @@ public class ShellInputState : ShellState
 
         }
 
-        Console.SetOut(
-            new StreamWriter(Console.OpenStandardOutput())
-            {
-                AutoFlush = true
-                
-            });
-
-        controller.Shell.Command = string.Empty;
-        controller.Shell.Filename = string.Empty;
-        controller.Shell.Args = []; 
-        controller.Shell.OutputWriter?.Close();
-        controller.Shell.OutputWriter = null;
-        controller.Shell.ShellEnvironment.IsOutputRedirected = false;
+        controller.Shell.Reset();
 
     }
 
@@ -53,14 +41,15 @@ public class ShellInputState : ShellState
         }
 
         shell.Parser.TokenizedInput = shell.Parser.Tokenize(input, new ParserStateController(shell.Parser, new ParserDefaultState()));
+        shell.Parser.TokenizedInput = shell.Parser.Expand(shell.Parser.TokenizedInput);
 
-        shell.Command = shell.Parser.TokenizedInput[0].Value;
+        shell.Command = shell.Parser.TokenizedInput[0].ExpandedValue;
         
         for(int i = 1; i < shell.Parser.TokenizedInput.Count; i++)
         {
             if (shell.Parser.TokenizedInput[i] is RedirectStdOutToken)
             {
-                shell.Filename = shell.Parser.TokenizedInput[i + 1].Value;
+                shell.Filename = shell.Parser.TokenizedInput[i + 1].ExpandedValue;
 
                 controller.Transition(new RedirectStdOutState());
 
@@ -68,7 +57,7 @@ public class ShellInputState : ShellState
 
             }
 
-            shell.Args.Add(shell.Parser.TokenizedInput[i].Value);
+            shell.Args.Add(shell.Parser.TokenizedInput[i].ExpandedValue);
 
         }
 

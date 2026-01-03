@@ -5,7 +5,7 @@ namespace Shell.Commands;
 public class Echo : ShellCommand
 {
     
-    public Echo(IShellEnvironment environment) : base(environment) {}
+    public Echo(IShell shell) : base(shell) {}
 
     public override void Execute(object[]? args)
     {        
@@ -25,7 +25,7 @@ public class Echo : ShellCommand
             }
             else
             {
-                Console.Write(Environment.CommandSeparator);
+                Console.Write(Shell.CommandSeparator);
                 
             }
             

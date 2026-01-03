@@ -22,6 +22,8 @@ public interface IParser
     /// <returns></returns>
     public IList<IToken> Tokenize(string input, IParserStateController controller);
    
+    public IList<IToken> Expand(IList<IToken> tokens);
+
     public IEnumerator<string> Parse();
    
 }

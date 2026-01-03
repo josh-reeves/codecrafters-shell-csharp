@@ -6,12 +6,11 @@ public class ChangeDirectory : ShellCommand
 {
     private const string invalidDirMsg = ": No such file or directory";
 
-    public ChangeDirectory(IShellEnvironment environment) : base(environment) {}
+    public ChangeDirectory(IShell shell) : base(shell) {}
 
     public override void Execute(object[]? args)
     {
-        string dir = (args?[0] as string ?? string.Empty).Replace(Environment.HomeChar.ToString(), Environment.HomeDir);
-
+        string dir = (args?[0] as string ?? string.Empty).Replace(Shell.HomeChar.ToString(), Shell.HomeDir);
         if (string.IsNullOrEmpty(dir))
         {
             return;

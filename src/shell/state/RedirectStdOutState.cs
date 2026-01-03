@@ -22,7 +22,7 @@ public class RedirectStdOutState : ShellState
 
         Console.SetOut(controller.Shell.OutputWriter);
 
-        controller.Shell.ShellEnvironment.IsOutputRedirected = true;
+        controller.Shell.IsOutputRedirected = true;
 
     }
 

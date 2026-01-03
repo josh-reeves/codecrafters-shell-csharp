@@ -8,6 +8,7 @@ public class RedirectStdOutToken : IToken
     public RedirectStdOutToken()
     {
         Value = string.Empty;
+        ExpandedValue = string.Empty;
 
     }
 
@@ -15,6 +16,8 @@ public class RedirectStdOutToken : IToken
 
     #region Properties
     public string Value { get; set; }
+
+    public string ExpandedValue { get; set; }
     
     #endregion
 }
