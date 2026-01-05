@@ -1,18 +1,15 @@
 using Interfaces;
 
-namespace Shell.Extensions.Parser.State;
+namespace Shell.Extensions.Lexer.State;
 
-public class ParserStateController : IParserStateController
+public class LexerStateController : ILexerStateController
 {
     private IState defaultState,
                    currentState;
 
-    public ParserStateController(IParser parser, IState initialState)
+    public LexerStateController(ILexer lexer, IState initialState)
     {
-        RemainingText = string.Empty;
-        Parser = parser;
-
-        ParsedTokens = [];
+        Lexer = lexer;
 
         currentState = defaultState = initialState;
         currentState.Controller = this;
@@ -20,11 +17,7 @@ public class ParserStateController : IParserStateController
 
     }
 
-    public string RemainingText { get; set; }
-
-    public IToken? CurrentToken { get; set; }
-
-    public IParser Parser { get; private set;}
+    public ILexer Lexer { get; set;}
 
     public IState CurrentState
     {
@@ -38,8 +31,6 @@ public class ParserStateController : IParserStateController
         }
         
     }
-
-    public IList<IToken> ParsedTokens { get; private set; }
 
     public void Transition(IState state)
     {

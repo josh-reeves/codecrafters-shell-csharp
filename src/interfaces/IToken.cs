@@ -2,7 +2,9 @@ namespace Interfaces;
 
 public interface IToken
 {
-    public string Value { get; set; }
+    public int Position { get; set; }
+
+    public string RawValue { get; set; }
 
     public string ExpandedValue { get; set; }
 

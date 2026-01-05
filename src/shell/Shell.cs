@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using Interfaces;
 using Shell.Commands;
+using Shell.Extensions.Lexer.State;
+using Shell.Extensions.Lexer.Tokens;
 using Shell.Extensions.Parser;
-using Shell.Extensions.Parser.State;
-using Shell.State;
+using Shell.Extensions.ShellInputHandler.Expander;
+using Shell.Extensions.ShellInputHandler.Lexer;
 using Type = Shell.Commands.Type;
 
 namespace Shell;
@@ -11,29 +13,46 @@ namespace Shell;
 public class Shell : IShell
 {
     #region Fields
-    private ShellStateController controller;
+    private bool isStdOutRedirected,
+                 isStdErrRedirected;
+
+    private string command,
+                   stdOutFile,
+                   stdErrFile;
+
+    private StreamWriter? outWriter,
+                          errWriter;
+    private IShellInputHandler inputHandler;
+    private IList<string> args;
 
     #endregion
 
     #region Constructor(s)
     public Shell(string pathVar, char commandSeparator, char homeChar)
-    {        
-        controller = new(this, new ShellInputState());
+    {  
+        command = string.Empty;
+        stdOutFile = string.Empty;
+        stdErrFile = string.Empty;
+        args = [];
 
         PathVar = pathVar;
         CommandSeparator = commandSeparator;
         HomeChar = homeChar;
         InvalidCmdMsg = ": command not found";
-        Command = string.Empty;
-        Filename = string.Empty;
-        Args = [];
+        inputHandler = new ShellInputHandler(new Lexer(), new Expander());
 
-        Parser = new Parser();
-        Parser.Separators.Add(CommandSeparator);
-        Parser.GroupDelimiters.Add('\'', new ParserGroupDelimiterState('\''));
-        Parser.GroupDelimiters.Add('"', new ParserGroupDelimiterState('"'));
-        Parser.Operators.Add(">", new ParserRedirectStdOutState(">"));
-        Parser.Operators.Add("1>", new ParserRedirectStdOutState("1>"));
+        inputHandler.Lexer.Separators.Add(CommandSeparator);
+        inputHandler.Lexer.GroupDelimiters.Add('\'', new LexerGroupDelimiterState('\''));
+        inputHandler.Lexer.GroupDelimiters.Add('"', new LexerGroupDelimiterState('"'));
+        inputHandler.Lexer.Operators.Add(">", new LexerRedirectStdOutState(">"));
+        inputHandler.Lexer.Operators.Add("1>", new LexerRedirectStdOutState("1>"));
+        inputHandler.Lexer.Operators.Add("2>", new LexerRedirectStdErrState("2>"));
+        
+        foreach (char key in inputHandler.Lexer.GroupDelimiters.Keys)
+        {
+            inputHandler.Expander.GroupDelimiters.Add(key);
+
+        }
 
         Commands = new Dictionary<string, IShellCommand>()
         {
@@ -51,18 +70,6 @@ public class Shell : IShell
 
     #region Properties
     public bool ShellIsActive { get; set; }
-
-    public bool IsOutputRedirected { get; set; }
-
-    public string Command { get; set; }
-
-    public string Filename { get; set; }
-
-    public IParser Parser { get; private set;}
-
-    public StreamWriter? OutputWriter { get; set; }
-
-    public IList<string> Args { get; set; }
 
     public char CommandSeparator { get; private set; }
     
@@ -93,8 +100,68 @@ public class Shell : IShell
         {
             try
             {
-               controller.CurrentState.Execute();
-             
+                Reset();
+
+                Console.Write("$ ");
+
+                IList<IToken> input = inputHandler.ReadInput(Console.ReadLine() ?? string.Empty);
+
+                if (input.Count <= 0)
+                {
+                    continue;
+                    
+                }
+
+                command = input[0].ExpandedValue;
+                
+                for (int i = 1; i < input.Count; i++)
+                {
+                    if (input[i] is RedirectStdOutToken)
+                    {
+                        i++;
+
+                        stdOutFile = input[i].ExpandedValue;
+                        
+                        RedirectStdOut();
+
+                        continue;
+                        
+                    }
+
+                    if (input[i] is RedirectStdErrToken)
+                    {
+                        i++;
+
+                        stdErrFile = input[i].ExpandedValue;
+                        
+                        RedirectStdErr();
+
+                        continue;
+                        
+                    }
+
+                    args.Add(input[i].ExpandedValue);
+                    
+                }
+
+                if (Commands.Keys.Contains(input[0].ExpandedValue))
+                {
+                    Commands[input[0].ExpandedValue]?.Execute(args.ToArray());
+
+                    continue;
+
+                }
+                
+                if (IsExecutable(Search(command, PathList).ToArray()))
+                {
+                    ExecuteExternal(command, args.ToArray());
+
+                    continue;
+                    
+                }
+
+                Console.WriteLine(command + InvalidCmdMsg);
+
             }
             catch (Exception ex)
             {
@@ -106,7 +173,7 @@ public class Shell : IShell
 
     }
 
-    public void Reset()
+    private void Reset()
     {
         Console.SetOut(
             new StreamWriter(Console.OpenStandardOutput())
@@ -115,24 +182,29 @@ public class Shell : IShell
                 
             });
 
-        Command = string.Empty;
-        Filename = string.Empty;
-        Args = []; 
-        IsOutputRedirected = false;
-        OutputWriter?.Close();
-        OutputWriter = null;
+        command = string.Empty;
+        stdOutFile = string.Empty;
+        stdErrFile = string.Empty;
+        args = [];
+        isStdOutRedirected = false;
+        isStdErrRedirected = false;
+        outWriter?.Close();
+        outWriter = null;
+        errWriter?.Close();
+        errWriter = null;
 
     }
 
-    public void ExecuteExternal(string executable, string[] args)
+    private void ExecuteExternal(string executable, string[] args)
     {
         Process process = new()
         {
             StartInfo = new ProcessStartInfo()
             {
                 FileName = executable,
-                UseShellExecute = !IsOutputRedirected,
-                RedirectStandardOutput = IsOutputRedirected
+                UseShellExecute = !isStdOutRedirected && !isStdErrRedirected,
+                RedirectStandardOutput = isStdOutRedirected,
+                RedirectStandardError = isStdErrRedirected
 
             }
             
@@ -146,16 +218,53 @@ public class Shell : IShell
 
         process.Start();
 
-        if (IsOutputRedirected)
+        if (isStdOutRedirected)
         {
             string output = process.StandardOutput.ReadToEnd();
-            OutputWriter?.Write(output);
+            outWriter?.Write(output);
+
+        }
+
+        if (isStdErrRedirected)
+        {
+            string error = process.StandardError.ReadToEnd();
+            errWriter?.Write(error);
 
         }
 
         process.WaitForExit();
 
     }
+
+    private void RedirectStdOut()
+    {
+        outWriter = new StreamWriter(new FileStream(stdOutFile, FileMode.Create, FileAccess.Write))
+        {
+            AutoFlush = true
+
+        };
+
+        Console.SetOut(outWriter);
+
+        isStdOutRedirected = true;
+
+        
+    }
+
+    private void RedirectStdErr()
+    {
+        errWriter = new StreamWriter(new FileStream(stdErrFile, FileMode.Create, FileAccess.Write))
+        {
+            AutoFlush = true
+
+        };
+
+        Console.SetError(errWriter);
+
+        isStdErrRedirected = true;
+        
+    }
+
 
     public bool IsExecutable(string[] files)
     {

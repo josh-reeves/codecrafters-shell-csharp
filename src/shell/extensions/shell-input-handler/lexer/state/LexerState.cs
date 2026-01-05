@@ -1,10 +1,10 @@
 using Interfaces;
 
-namespace Shell.Extensions.Parser.State;
+namespace Shell.Extensions.Lexer.State;
 
-public abstract class ParserState : IState
+public abstract class LexerState : IState
 {
-    public ParserState() {}
+    public LexerState() {}
 
     public IStateController? Controller { get; set; }
 

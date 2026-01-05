@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="src/shell/extensions/parser/tokens/" />
+    <Folder Include="src/shell/extensions/shell-input-handler/expander/" />
   </ItemGroup>
 
 </Project>

@@ -1,9 +1,13 @@
-using System.Collections;
-
 namespace Interfaces;
 
-public interface IParser
+public interface ILexer
 {
+    public int Position { get; set; }
+
+    public string RemainingText { get; set; }
+
+    public IToken? CurrentToken { get; set; }
+
     public IList<char> Separators { get; set;}
 
     public IList<IToken> TokenizedInput { get; set; }
@@ -20,10 +24,6 @@ public interface IParser
     /// <param name="operators"></param>
     /// <param name="groupDelimiters"></param>
     /// <returns></returns>
-    public IList<IToken> Tokenize(string input, IParserStateController controller);
-   
-    public IList<IToken> Expand(IList<IToken> tokens);
-
-    public IEnumerator<string> Parse();
-   
+    public IList<IToken> Tokenize(string input, ILexerStateController controller);
+      
 }

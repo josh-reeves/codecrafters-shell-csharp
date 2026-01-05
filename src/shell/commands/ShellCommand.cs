@@ -1,4 +1,3 @@
-using Shell.Extensions;
 using Interfaces;
 
 namespace Shell.Commands;

@@ -1,14 +1,12 @@
-using Interfaces;
+namespace Shell.Extensions.Lexer.State;
 
-namespace Shell.Extensions.Parser.State;
-
-public class ParserEOFState : ParserState
+public class LexerEOFState : LexerState
 {
-    public ParserEOFState() {}
+    public LexerEOFState() {}
     
     public override void Enter() 
     {
-        if (Controller is not ParserStateController controller)
+        if (Controller is not LexerStateController controller)
         {
             return;
 
@@ -16,7 +14,7 @@ public class ParserEOFState : ParserState
 
         /* If the program somehow ended up here prematurely, this will ensure
          *  completion of any calling loops based on the remaining text.*/
-        controller.RemainingText = string.Empty; 
+        controller.Lexer.RemainingText = string.Empty; 
         
     }
 
