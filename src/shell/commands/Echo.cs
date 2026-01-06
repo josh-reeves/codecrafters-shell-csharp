@@ -18,16 +18,12 @@ public class Echo : ShellCommand
         {
             StandardOutput += (args[i]);
 
-            if (i == args.Length - 1)
-            {
-                StandardOutput += ("\n");
-
-            }
-            else
+            if (i > args.Length - 1)
             {
                 StandardOutput += Shell.CommandSeparator;
-                
+
             }
+ 
             
         }
 
