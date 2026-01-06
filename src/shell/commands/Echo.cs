@@ -16,14 +16,18 @@ public class Echo : ShellCommand
 
         for (int i = 0; i < args.Length; i++)
         {
-            StandardOutput += (args[i]);
+            StandardOutput += args[i];
 
-            if (i > args.Length - 1)
+            if (i == args.Length - 1)
             {
-                StandardOutput += Shell.CommandSeparator;
+                StandardOutput += "\n";
 
             }
- 
+            else
+            {
+                StandardOutput += Shell.CommandSeparator;
+                
+            }
             
         }
 
@@ -33,7 +37,7 @@ public class Echo : ShellCommand
 
         }   
 
-        Console.WriteLine(StandardOutput);
+        Console.Write(StandardOutput);
 
     }
     
