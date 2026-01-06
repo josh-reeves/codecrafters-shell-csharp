@@ -1,6 +1,6 @@
 using Interfaces;
 
-namespace Shell.Extensions.Lexer.State;
+namespace Shell.Extensions.ShellInputHandler.Lexer.State;
 
 public class LexerStateController : ILexerStateController
 {

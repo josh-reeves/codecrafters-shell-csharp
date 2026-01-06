@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using Interfaces;
 using Shell.Commands;
-using Shell.Extensions.Lexer.State;
-using Shell.Extensions.Lexer.Tokens;
-using Shell.Extensions.Parser;
+using Shell.Extensions.ShellInputHandler.Lexer.State;
+using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
+using Shell.Extensions.ShellInputHandler;
 using Shell.Extensions.ShellInputHandler.Expander;
 using Shell.Extensions.ShellInputHandler.Lexer;
 using Type = Shell.Commands.Type;
@@ -13,27 +13,21 @@ namespace Shell;
 public class Shell : IShell
 {
     #region Fields
-    private bool isStdOutRedirected,
-                 isStdErrRedirected;
+    private string command;
 
-    private string command,
-                   stdOutFile,
-                   stdErrFile;
-
-    private StreamWriter? outWriter,
-                          errWriter;
     private IShellInputHandler inputHandler;
+    
     private IList<string> args;
 
     #endregion
 
     #region Constructor(s)
-    public Shell(string pathVar, char commandSeparator, char homeChar)
+    public Shell(string pathVar, char commandSeparator, char homeChar, IShellInputHandler shellInputHandler)
     {  
         command = string.Empty;
-        stdOutFile = string.Empty;
-        stdErrFile = string.Empty;
         args = [];
+        OutWriters = [];
+        ErrWriters = [];
 
         PathVar = pathVar;
         CommandSeparator = commandSeparator;
@@ -47,6 +41,9 @@ public class Shell : IShell
         inputHandler.Lexer.Operators.Add(">", new LexerRedirectStdOutState(">"));
         inputHandler.Lexer.Operators.Add("1>", new LexerRedirectStdOutState("1>"));
         inputHandler.Lexer.Operators.Add("2>", new LexerRedirectStdErrState("2>"));
+        inputHandler.Lexer.Operators.Add(">>", new LexerAppendStdOutState(">>"));
+        inputHandler.Lexer.Operators.Add("1>>", new LexerAppendStdOutState("1>>"));
+        inputHandler.Lexer.Operators.Add("2>>", new LexerAppendStdErrState("2>>"));
         
         foreach (char key in inputHandler.Lexer.GroupDelimiters.Keys)
         {
@@ -71,6 +68,10 @@ public class Shell : IShell
     #region Properties
     public bool ShellIsActive { get; set; }
 
+    public bool IsStdOutRedirected { get; set; }
+
+    public bool IsStdErrRedirected { get; set; }
+
     public char CommandSeparator { get; private set; }
     
     public char HomeChar { get; private set; }
@@ -86,6 +87,10 @@ public class Shell : IShell
     public string InvalidCmdMsg { get; private set; }
 
     public IList<string> PathList { get => Path.Split(PathSeparator).ToList(); }
+
+    public IList<StreamWriter> OutWriters { get; set;}
+
+    public IList<StreamWriter> ErrWriters { get; set; }
 
     public IDictionary<string, IShellCommand> Commands { get; private set; }
 
@@ -116,37 +121,57 @@ public class Shell : IShell
                 
                 for (int i = 1; i < input.Count; i++)
                 {
-                    if (input[i] is RedirectStdOutToken)
+                    switch (input[i])
                     {
-                        i++;
+                        case RedirectStdOutToken:
+                            i++;
 
-                        stdOutFile = input[i].ExpandedValue;
-                        
-                        RedirectStdOut();
+                            RedirectStdOut(input[i].ExpandedValue);
 
-                        continue;
-                        
+                            continue;
+
+                        case RedirectStdErrToken:
+                            i++;
+                            
+                            RedirectStdErr(input[i].ExpandedValue);
+
+                            continue;
+
+                        case AppendStdOutToken:
+                            i++;
+                            
+                            AppendStdOut(input[i].ExpandedValue);
+
+                            continue;
+                            
+                        case AppendStdErrToken:
+                            i++;
+                            
+                            AppendStdErr(input[i].ExpandedValue);
+
+                            continue;
+                            
                     }
-
-                    if (input[i] is RedirectStdErrToken)
-                    {
-                        i++;
-
-                        stdErrFile = input[i].ExpandedValue;
-                        
-                        RedirectStdErr();
-
-                        continue;
-                        
-                    }
-
+    
                     args.Add(input[i].ExpandedValue);
                     
                 }
 
-                if (Commands.Keys.Contains(input[0].ExpandedValue))
+                if (Commands.Keys.Contains(command))
                 {
-                    Commands[input[0].ExpandedValue]?.Execute(args.ToArray());
+                    Commands[command]?.Execute(args.ToArray());
+
+                    foreach (StreamWriter writer in OutWriters)
+                    {
+                        writer.Write(Commands[command].StandardOutput);
+
+                    }
+
+                    foreach (StreamWriter writer in ErrWriters)
+                    {
+                        writer.Write(Commands[command].StandardError);
+
+                    }
 
                     continue;
 
@@ -175,6 +200,20 @@ public class Shell : IShell
 
     private void Reset()
     {
+        command = string.Empty;
+        args = [];
+
+        IList<StreamWriter> writers = OutWriters.Concat(ErrWriters).ToList();
+
+        foreach (StreamWriter writer in writers)
+        {
+            writer.Close();
+
+        }
+
+        OutWriters.Clear();
+        ErrWriters.Clear();
+
         Console.SetOut(
             new StreamWriter(Console.OpenStandardOutput())
             {
@@ -182,16 +221,8 @@ public class Shell : IShell
                 
             });
 
-        command = string.Empty;
-        stdOutFile = string.Empty;
-        stdErrFile = string.Empty;
-        args = [];
-        isStdOutRedirected = false;
-        isStdErrRedirected = false;
-        outWriter?.Close();
-        outWriter = null;
-        errWriter?.Close();
-        errWriter = null;
+        IsStdOutRedirected = false;
+        IsStdErrRedirected = false;
 
     }
 
@@ -202,9 +233,9 @@ public class Shell : IShell
             StartInfo = new ProcessStartInfo()
             {
                 FileName = executable,
-                UseShellExecute = !isStdOutRedirected && !isStdErrRedirected,
-                RedirectStandardOutput = isStdOutRedirected,
-                RedirectStandardError = isStdErrRedirected
+                UseShellExecute = !IsStdOutRedirected && !IsStdErrRedirected,
+                RedirectStandardOutput = IsStdOutRedirected,
+                RedirectStandardError = IsStdErrRedirected
 
             }
             
@@ -218,53 +249,81 @@ public class Shell : IShell
 
         process.Start();
 
-        if (isStdOutRedirected)
+        if (IsStdOutRedirected)
         {
             string output = process.StandardOutput.ReadToEnd();
-            outWriter?.Write(output);
+        
+            foreach (StreamWriter writer in OutWriters)
+            {
+                writer.Write(output);
 
+            }
+            
         }
 
-        if (isStdErrRedirected)
+        if (IsStdErrRedirected)
         {
             string error = process.StandardError.ReadToEnd();
-            errWriter?.Write(error);
-
+    
+            foreach (StreamWriter writer in ErrWriters)
+            {
+                writer.Write(error);
+                
+            }
+            
         }
 
         process.WaitForExit();
 
     }
 
-    private void RedirectStdOut()
+    private void RedirectStdOut(string file)
     {
-        outWriter = new StreamWriter(new FileStream(stdOutFile, FileMode.Create, FileAccess.Write))
+        OutWriters.Add(new StreamWriter(new FileStream(file, FileMode.Create, FileAccess.Write))
         {
             AutoFlush = true
 
-        };
-
-        Console.SetOut(outWriter);
-
-        isStdOutRedirected = true;
-
+        });
+        
+        IsStdOutRedirected = true;
         
     }
 
-    private void RedirectStdErr()
+    private void RedirectStdErr(string file)
     {
-        errWriter = new StreamWriter(new FileStream(stdErrFile, FileMode.Create, FileAccess.Write))
+        ErrWriters.Add(new StreamWriter(new FileStream(file, FileMode.Create, FileAccess.Write))
         {
             AutoFlush = true
 
-        };
+        });
+        
+        IsStdErrRedirected = true;
 
-        Console.SetError(errWriter);
+    }
 
-        isStdErrRedirected = true;
+    private void AppendStdOut(string file)
+    {
+        OutWriters.Add(new StreamWriter(new FileStream(file, FileMode.Append, FileAccess.Write))
+        {
+            AutoFlush = true
+
+        });
+        
+        IsStdOutRedirected = true;
         
     }
 
+    private void AppendStdErr(string file)
+    {
+        ErrWriters.Add(new StreamWriter(new FileStream(file, FileMode.Append, FileAccess.Write))
+        {
+            AutoFlush = true
+
+        });
+        
+        IsStdErrRedirected = true;
+        
+    }
 
     public bool IsExecutable(string[] files)
     {

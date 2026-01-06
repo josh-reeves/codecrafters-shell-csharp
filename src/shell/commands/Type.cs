@@ -10,37 +10,52 @@ public class Type : ShellCommand
 
     public Type(IShell shell) : base(shell) {}
 
-    public override void Execute(object[]? args)
+    public override void Execute(object[]? arguments)
     {
-        if (args is null || args.Length <= 0)
+        if (arguments is null || arguments.Length <= 0)
         {
             return;
 
         }
 
-        string arg = args[0] as string ?? string.Empty;
+        string[] args = arguments as string[] ?? [];        
+        List<string> results = [];
 
-        if (Shell.Commands.Keys.Contains(arg))
+        foreach (string arg in arguments)
         {
-            Console.WriteLine(arg + builtinMsg);
+            if (Shell.Commands.Keys.Contains(arg))
+            {
+                StandardOutput += arg + builtinMsg + "\n";
 
-            return;
-            
+                continue;
+                
+            }
+
+            results.AddRange(Shell.Search(arg, Shell.PathList));
+
         }
 
-        foreach (string result in Shell.Search(arg, Shell.PathList))
+        foreach (string result in results)
         {
             if (Shell.IsExecutable([result]))
             {
-                Console.WriteLine(args[0] + " is " + result);
+                StandardOutput += result + " is " + result + "\n";
 
-                return;
+                continue;
                 
             }
+
+            StandardOutput += result + cmdNotFoundMsg + "\n";
             
         }
 
-        Console.WriteLine(args[0] + cmdNotFoundMsg);   
+        if (Shell.IsStdOutRedirected)
+        {
+            return;
+
+        }
+
+        Console.Write(StandardOutput);
 
     }
 

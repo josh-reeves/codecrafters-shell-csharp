@@ -1,6 +1,5 @@
-using Interfaces;
+namespace Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 
-namespace Shell.Extensions.Lexer.Tokens;
 
 public class WordToken : ShellToken
 {

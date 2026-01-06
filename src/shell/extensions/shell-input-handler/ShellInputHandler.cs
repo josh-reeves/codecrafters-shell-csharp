@@ -1,7 +1,7 @@
 using Interfaces;
-using Shell.Extensions.Lexer.State;
+using Shell.Extensions.ShellInputHandler.Lexer.State;
 
-namespace Shell.Extensions.Parser;
+namespace Shell.Extensions.ShellInputHandler;
 
 public class ShellInputHandler : IShellInputHandler
 {

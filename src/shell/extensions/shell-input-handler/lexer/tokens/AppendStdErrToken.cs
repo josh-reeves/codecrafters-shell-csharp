@@ -1,14 +1,11 @@
-using Interfaces;
-
 namespace Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 
 
-public class RedirectStdErrToken : ShellToken
+public class AppendStdErrToken : ShellToken
 {
     #region Constructor(s)
-    public RedirectStdErrToken() {}
+    public AppendStdErrToken() {}
 
     #endregion
 
-    
 }

@@ -1,6 +1,8 @@
-using Shell.Extensions.Lexer.Tokens;
+using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 
-namespace Shell.Extensions.Lexer.State;
+
+
+namespace Shell.Extensions.ShellInputHandler.Lexer.State;
 
 public class LexerDefaultState : LexerState
 {

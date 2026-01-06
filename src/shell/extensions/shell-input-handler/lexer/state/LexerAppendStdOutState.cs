@@ -1,29 +1,35 @@
+using System;
 using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
-
-
 
 namespace Shell.Extensions.ShellInputHandler.Lexer.State;
 
-public class LexerGroupDelimiterState : LexerState
+public class LexerAppendStdOutState : LexerState
 {
-    private char terminator;
+    #region Fields
+    private string sequence;
 
-    public LexerGroupDelimiterState(char terminatorChar)
+    #endregion
+
+    #region Constructor(s)
+    public LexerAppendStdOutState(string operatorSequence)
     {
-        terminator = terminatorChar;
-
+        sequence = operatorSequence;
+        
     }
 
+    #endregion
+
+    #region Methods
     public override void Enter()
     {
         if (Controller is not LexerStateController controller)
         {
             return;
-
+            
         }
 
-        controller.Lexer.CurrentToken = new WordToken();
-
+        controller.Lexer.CurrentToken = new AppendStdOutToken();
+        
     }
 
     public override void Execute()
@@ -34,28 +40,24 @@ public class LexerGroupDelimiterState : LexerState
 
         }
 
-        controller.Lexer.CurrentToken.RawValue += controller.Lexer.RemainingText[0];
+        if (controller.Lexer.CurrentToken.RawValue == sequence)
+        {
+            controller.Transition(new LexerDefaultState());
 
+            return;
+
+        }
+
+        controller.Lexer.CurrentToken.RawValue += controller.Lexer.RemainingText[0];
         controller.Lexer.RemainingText = controller.Lexer.RemainingText[1..];
         controller.Lexer.Position++;
 
         if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
         {
             controller.Transition(new LexerEOFState());
+
+            return;
             
-            return;
-        }
-
-        if (controller.Lexer.RemainingText[0] == terminator)
-        {
-            controller.Lexer.CurrentToken.RawValue += controller.Lexer.RemainingText[0];
-            controller.Lexer.RemainingText = controller.Lexer.RemainingText[1..];
-            controller.Lexer.Position++;
-
-            controller.Transition(new LexerDefaultState());
-
-            return;
-
         }
 
     }
@@ -77,5 +79,7 @@ public class LexerGroupDelimiterState : LexerState
         controller.Lexer.TokenizedInput.Add(controller.Lexer.CurrentToken);
 
     }
+
+    #endregion
 
 }

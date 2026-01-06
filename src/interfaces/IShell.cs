@@ -4,6 +4,10 @@ public interface IShell
 {
     public bool ShellIsActive { get; set; }
 
+    public bool IsStdOutRedirected { get; set; }
+
+    public bool IsStdErrRedirected { get; set; }
+
     public char CommandSeparator { get; }
     
     public char HomeChar { get;  }
@@ -19,6 +23,10 @@ public interface IShell
     public string InvalidCmdMsg { get; }
 
     public IList<string> PathList { get; }
+
+    public IList<StreamWriter> OutWriters { get; }
+    
+    public IList<StreamWriter> ErrWriters { get; }
 
     public IDictionary<string, IShellCommand> Commands { get; }
 

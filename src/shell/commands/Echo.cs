@@ -4,11 +4,10 @@ namespace Shell.Commands;
 
 public class Echo : ShellCommand
 {
-    
     public Echo(IShell shell) : base(shell) {}
 
     public override void Execute(object[]? args)
-    {        
+    {                
         if (args is null)
         {
             return;
@@ -17,19 +16,28 @@ public class Echo : ShellCommand
 
         for (int i = 0; i < args.Length; i++)
         {
-            Console.Write(args[i]);
+            StandardOutput += (args[i]);
 
             if (i == args.Length - 1)
             {
-                Console.Write("\r\n");
+                StandardOutput += ("\n");
+
             }
             else
             {
-                Console.Write(Shell.CommandSeparator);
+                StandardOutput += Shell.CommandSeparator;
                 
             }
             
+        }
+
+        if (Shell.IsStdOutRedirected)
+        {
+            return;
+
         }   
+
+        Console.WriteLine(StandardOutput);
 
     }
     

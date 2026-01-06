@@ -11,21 +11,30 @@ public class ChangeDirectory : ShellCommand
     public override void Execute(object[]? args)
     {
         string dir = (args?[0] as string ?? string.Empty).Replace(Shell.HomeChar.ToString(), Shell.HomeDir);
+        
         if (string.IsNullOrEmpty(dir))
         {
             return;
 
         }
 
-        if (!Directory.Exists(dir))
+        if (Directory.Exists(dir))
         {
-            Console.WriteLine(dir + invalidDirMsg);
+            Directory.SetCurrentDirectory(dir);
 
             return;
 
         }
 
-        Directory.SetCurrentDirectory(dir);
+        StandardError += dir + invalidDirMsg;
+
+        if (Shell.IsStdErrRedirected)
+        {
+            return;
+
+        }
+
+        Console.WriteLine(StandardError);
 
     }
 
