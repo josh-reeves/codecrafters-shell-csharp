@@ -10,43 +10,42 @@ public class Type : ShellCommand
 
     public Type(IShell shell) : base(shell) {}
 
-    public override void Execute(object[]? arguments)
+    public override void Execute(object[]? args)
     {
-        if (arguments is null || arguments.Length <= 0)
+        if (args is null || args.Length <= 0)
         {
             return;
 
         }
-
-        string[] args = arguments as string[] ?? [];        
-        List<string> results = [];
-
-        foreach (string arg in arguments)
+        
+        Queue<string> arguments = new Queue<string>(args as string[] ?? []);
+        
+        while (arguments.Count > 0)
         {
-            if (Shell.Commands.Keys.Contains(arg))
+            if (Shell.Commands.ContainsKey(arguments.Peek()))
             {
-                StandardOutput += arg + builtinMsg + "\n";
+                StandardOutput += arguments.Dequeue() + builtinMsg + "\n";
 
                 continue;
                 
             }
 
-            results.AddRange(Shell.Search(arg, Shell.PathList));
-
-        }
-
-        foreach (string result in results)
-        {
-            if (Shell.IsExecutable([result]))
+            foreach (string result in Shell.Search(arguments.Peek(), Shell.PathList))
             {
-                StandardOutput += result + " is " + result + "\n";
-
-                continue;
+                if (Shell.IsExecutable([result]))
+                {
+                    StandardOutput += arguments.Dequeue() + " is " + result + "\n";
+                    
+                }
                 
             }
 
-            StandardOutput += result + cmdNotFoundMsg + "\n";
-            
+            if (arguments.Count > 0 && !Shell.Commands.ContainsKey(arguments.Peek()))
+            {
+                StandardOutput += arguments.Dequeue() + cmdNotFoundMsg + "\n";
+   
+            }
+
         }
 
         if (Shell.IsStdOutRedirected)
