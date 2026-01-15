@@ -10,7 +10,7 @@ public interface ILexer
 
     public IList<char> Separators { get; set;}
 
-    public IList<IToken> TokenizedInput { get; set; }
+    public Queue<IToken> TokenizedInput { get; set; }
 
     public IDictionary<string, IState> Operators { get; }
 
@@ -24,6 +24,6 @@ public interface ILexer
     /// <param name="operators"></param>
     /// <param name="groupDelimiters"></param>
     /// <returns></returns>
-    public IList<IToken> Tokenize(string input, ILexerStateController controller);
+    public Queue<IToken> Tokenize(string input, ILexerStateController controller);
       
 }

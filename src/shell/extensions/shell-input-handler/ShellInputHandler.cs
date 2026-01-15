@@ -1,14 +1,16 @@
 using Interfaces;
 using Shell.Extensions.ShellInputHandler.Lexer.State;
+using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 namespace Shell.Extensions.ShellInputHandler;
 
 public class ShellInputHandler : IShellInputHandler
 {
-    public ShellInputHandler(ILexer shellLexer, IExpander shellExpander)
+    public ShellInputHandler(ILexer shellLexer, IExpander shellExpander, IParser parser)
     {
         Lexer = shellLexer;
         Expander = shellExpander;
+        Parser = parser;
         
     }
 
@@ -16,21 +18,17 @@ public class ShellInputHandler : IShellInputHandler
 
     public IExpander Expander { get; private set; }
 
+    public IParser Parser { get; private set;}
+
     public IList<IToken> ReadInput(string input)
     {
-        IList<IToken> tokenizedInput = Lexer.Tokenize(input, new LexerStateController(Lexer, new LexerDefaultState()));
+        Queue<IToken> tokenizedInput = Lexer.Tokenize(input, new LexerStateController(Lexer, new LexerDefaultState()));
 
         tokenizedInput = Expander.Expand(tokenizedInput);
 
-        List<string> processedInput = [];
-        
-        foreach (IToken token in tokenizedInput)
-        {
-            processedInput.Add(token.ExpandedValue);
+        // CommandTree command = (CommandTree)Parser.Parse(tokenizedInput);
 
-        }
-
-        return tokenizedInput;
+        return tokenizedInput.ToList();
 
     }
 

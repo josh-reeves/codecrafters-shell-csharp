@@ -76,7 +76,7 @@ public class LexerAppendStdOutState : LexerState
             
         }
 
-        controller.Lexer.TokenizedInput.Add(controller.Lexer.CurrentToken);
+        controller.Lexer.TokenizedInput.Enqueue(controller.Lexer.CurrentToken);
 
     }
 

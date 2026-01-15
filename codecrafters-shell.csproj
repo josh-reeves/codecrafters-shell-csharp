@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="src/libs/" />
     <Folder Include="src/shell/extensions/shell-input-handler/expander/" />
   </ItemGroup>
 

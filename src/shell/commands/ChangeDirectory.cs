@@ -8,9 +8,9 @@ public class ChangeDirectory : ShellCommand
 
     public ChangeDirectory(IShell shell) : base(shell) {}
 
-    public override void Execute(object[]? args)
+    public override void Execute(object? args)
     {
-        string dir = (args?[0] as string ?? string.Empty).Replace(Shell.HomeChar.ToString(), Shell.HomeDir);
+        string dir = (args as string[] ?? [])[0].Replace(Shell.HomeChar.ToString(), Shell.HomeDir);
         
         if (string.IsNullOrEmpty(dir))
         {

@@ -10,41 +10,39 @@ public class Type : ShellCommand
 
     public Type(IShell shell) : base(shell) {}
 
-    public override void Execute(object[]? args)
+    public override void Execute(object? args)
     {
-        if (args is null || args.Length <= 0)
+        if (args is null)
         {
             return;
 
         }
         
-        Queue<string> arguments = new Queue<string>(args as string[] ?? []);
-        
-        while (arguments.Count > 0)
+        string[] argList = args as string[] ?? [];
+                
+        foreach (string arg in argList ?? [])
         {
-            if (Shell.Commands.ContainsKey(arguments.Peek()))
-            {
-                StandardOutput += arguments.Dequeue() + builtinMsg + "\n";
+            string result = arg + cmdNotFoundMsg + '\n';
 
-                continue;
-                
-            }
-
-            foreach (string result in Shell.Search(arguments.Peek(), Shell.PathList))
+            foreach(string file in Shell.Search(arg, Shell.PathList))       
             {
-                if (Shell.IsExecutable([result]))
+                if (Shell.IsExecutable([..Shell.Search(arg, Shell.PathList)]))
                 {
-                    StandardOutput += arguments.Dequeue() + " is " + result + "\n";
-                    
+                    result = arg + " is " + file + '\n';
+
+                    continue;
+
                 }
+
+            }
+
+            if (Shell.Builtins.ContainsKey(arg))
+            {
+                result = arg + builtinMsg + '\n';
                 
             }
 
-            if (arguments.Count > 0 && !Shell.Commands.ContainsKey(arguments.Peek()))
-            {
-                StandardOutput += arguments.Dequeue() + cmdNotFoundMsg + "\n";
-   
-            }
+            StandardOutput += result;
 
         }
 

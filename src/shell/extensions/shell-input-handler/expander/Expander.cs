@@ -12,7 +12,7 @@ public class Expander : IExpander
 
     public IList<char> GroupDelimiters { get; private set; }
 
-    public IList<IToken> Expand(IList<IToken> tokens)
+    public Queue<IToken> Expand(Queue<IToken> tokens)
     {
 
         // Quote removal:

@@ -1,4 +1,5 @@
 using Interfaces;
+using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 namespace Shell.Commands;
 
@@ -6,6 +7,8 @@ public abstract class ShellCommand : IShellCommand
 {
     private string standardOutput,
                    standardError;
+
+    private ITreeNode? iterator;
 
     public ShellCommand(IShell shell)
     {
@@ -58,6 +61,14 @@ public abstract class ShellCommand : IShellCommand
         
     }
 
-    public abstract void Execute(object[]? args);   
+    public virtual void Execute(object? args)
+    {
+        if (args is not CommandTree command)
+        {
+            return;
+            
+        }
+        
+    }
 
 }

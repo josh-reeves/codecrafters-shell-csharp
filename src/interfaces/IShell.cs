@@ -1,3 +1,5 @@
+using Shell.Extensions.ShellInputHandler;
+
 namespace Interfaces;
 
 public interface IShell
@@ -28,7 +30,7 @@ public interface IShell
     
     public IList<StreamWriter> ErrWriters { get; }
 
-    public IDictionary<string, IShellCommand> Commands { get; }
+    public IDictionary<string, IShellCommand> Builtins { get; }
 
     public void Run();
 

@@ -4,7 +4,6 @@ namespace Shell.Extensions.ShellInputHandler.Lexer;
 
 public class Lexer : ILexer
 {
-
     public Lexer()
     {
         Position = 0;
@@ -24,13 +23,13 @@ public class Lexer : ILexer
 
     public IList<char> Separators { get; set;}
 
-    public IList<IToken> TokenizedInput { get; set; }
+    public Queue<IToken> TokenizedInput { get; set; }
 
     public IDictionary<string, IState> Operators { get; }
 
     public IDictionary<char, IState> GroupDelimiters { get; }
 
-    public IList<IToken> Tokenize(string input, ILexerStateController controller)
+    public Queue<IToken> Tokenize(string input, ILexerStateController controller)
     {
         RemainingText = input;
         TokenizedInput.Clear();

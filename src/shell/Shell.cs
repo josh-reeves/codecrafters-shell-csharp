@@ -7,6 +7,8 @@ using Shell.Extensions.ShellInputHandler;
 using Shell.Extensions.ShellInputHandler.Expander;
 using Shell.Extensions.ShellInputHandler.Lexer;
 using Type = Shell.Commands.Type;
+using Shell.Extensions.ShellInputHandler.Parser;
+using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 namespace Shell;
 
@@ -33,7 +35,7 @@ public class Shell : IShell
         CommandSeparator = commandSeparator;
         HomeChar = homeChar;
         InvalidCmdMsg = ": command not found";
-        inputHandler = new ShellInputHandler(new Lexer(), new Expander());
+        inputHandler = new ShellInputHandler(new Lexer(), new Expander(), new Parser());
 
         inputHandler.Lexer.Separators.Add(CommandSeparator);
         inputHandler.Lexer.GroupDelimiters.Add('\'', new LexerGroupDelimiterState('\''));
@@ -51,7 +53,7 @@ public class Shell : IShell
 
         }
 
-        Commands = new Dictionary<string, IShellCommand>()
+        Builtins = new Dictionary<string, IShellCommand>()
         {
             {"echo", new Echo(this)},
             {"pwd", new PrintWorkingDirectory(this)},
@@ -92,7 +94,7 @@ public class Shell : IShell
 
     public IList<StreamWriter> ErrWriters { get; set; }
 
-    public IDictionary<string, IShellCommand> Commands { get; private set; }
+    public IDictionary<string, IShellCommand> Builtins { get; private set; }
 
     #endregion
 
@@ -109,16 +111,17 @@ public class Shell : IShell
 
                 Console.Write("$ ");
 
+
                 IList<IToken> input = inputHandler.ReadInput(Console.ReadLine() ?? string.Empty);
 
                 if (input.Count <= 0)
                 {
                     continue;
-                    
+
                 }
 
-                command = input[0].ExpandedValue;
-                
+                command = input.First().ExpandedValue;
+
                 for (int i = 1; i < input.Count; i++)
                 {
                     switch (input[i])
@@ -157,19 +160,19 @@ public class Shell : IShell
                     
                 }
 
-                if (Commands.Keys.Contains(command))
+                if (Builtins.Keys.Contains(command))
                 {
-                    Commands[command]?.Execute(args.ToArray());
+                    Builtins[command]?.Execute(args.ToArray());
 
                     foreach (StreamWriter writer in OutWriters)
                     {
-                        writer.Write(Commands[command].StandardOutput);
+                        writer.Write(Builtins[command].StandardOutput);
 
                     }
 
                     foreach (StreamWriter writer in ErrWriters)
                     {
-                        writer.Write(Commands[command].StandardError);
+                        writer.Write(Builtins[command].StandardError);
 
                     }
 

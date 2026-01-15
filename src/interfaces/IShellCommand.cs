@@ -6,6 +6,6 @@ public interface IShellCommand
 
     public string StandardError { get; }
 
-    public void Execute(object[]? args);
+    public void Execute(object? args);
 
 }

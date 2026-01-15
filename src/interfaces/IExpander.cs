@@ -4,6 +4,6 @@ public interface IExpander
 {
     public IList<char> GroupDelimiters { get; }
 
-    public IList<IToken> Expand(IList<IToken> tokens);
+    public Queue<IToken> Expand(Queue<IToken> tokens);
 
 }

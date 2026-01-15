@@ -6,7 +6,7 @@ public class Echo : ShellCommand
 {
     public Echo(IShell shell) : base(shell) {}
 
-    public override void Execute(object[]? args)
+    public override void Execute(object? args)
     {                
         if (args is null)
         {
@@ -14,11 +14,13 @@ public class Echo : ShellCommand
 
         }
 
-        for (int i = 0; i < args.Length; i++)
-        {
-            StandardOutput += args[i];
+        string[] argList = args as string[] ?? [];
 
-            if (i == args.Length - 1)
+        for (int i = 0; i < argList.Length; i++)
+        {
+            StandardOutput += argList[i];
+
+            if (i == argList.Length - 1)
             {
                 StandardOutput += "\n";
 
