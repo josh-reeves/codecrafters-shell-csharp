@@ -12,6 +12,8 @@ public class Type : ShellCommand
 
     public override void Execute(object? args)
     {
+        StandardOutput = string.Empty;
+        
         if (args is null)
         {
             return;
@@ -46,7 +48,7 @@ public class Type : ShellCommand
 
         }
 
-        if (Shell.IsStdOutRedirected)
+        if (IsStdOutRedirected)
         {
             return;
 

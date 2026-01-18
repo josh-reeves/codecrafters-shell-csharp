@@ -15,6 +15,12 @@ public class Parser : IParser
     {   
         CommandTree ast = new();
 
+        if (tokens.Count <= 0)
+        {
+            return ast;
+
+        }
+
         ast.Root = ParseCommand(tokens);    
 
         return ast;
@@ -34,31 +40,13 @@ public class Parser : IParser
 
                     break;
 
-                case RedirectStdOutToken:
-                    tokens.Dequeue();
-
-                    node.Children.Add(new RedirectorNode(tokens.Dequeue(), FileMode.Create, node));
+                case RedirectStdOutToken or RedirectStdErrToken:
+                    node.Children.Add(new RedirectorNode(tokens.Dequeue(), tokens.Dequeue(), FileMode.Create, node));
 
                     break;
 
-                case RedirectStdErrToken:
-                    tokens.Dequeue();
-
-                    node.Children.Add(new RedirectorNode(tokens.Dequeue(), FileMode.Create, node));
-
-                    break;
-
-                case AppendStdOutToken:
-                    tokens.Dequeue();
-
-                    node.Children.Add(new RedirectorNode(tokens.Dequeue(), FileMode.Append, node));
-
-                    break;
-
-                case AppendStdErrToken:
-                    tokens.Dequeue();
-
-                    node.Children.Add(new RedirectorNode(tokens.Dequeue(), FileMode.Append, node));
+                case AppendStdOutToken or AppendStdErrToken:
+                    node.Children.Add(new RedirectorNode(tokens.Dequeue(), tokens.Dequeue(), FileMode.Append, node));
 
                     break;
             

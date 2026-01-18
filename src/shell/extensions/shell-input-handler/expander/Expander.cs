@@ -14,11 +14,22 @@ public class Expander : IExpander
 
     public Queue<IToken> Expand(Queue<IToken> tokens)
     {
+        if (tokens.Count <= 0 )
+        {
+            return tokens;
+
+        }
 
         // Quote removal:
         foreach (IToken token in tokens)
         {
-            token.ExpandedValue = token.RawValue.Trim(GroupDelimiters.ToArray());
+            token.ExpandedValue = token.RawValue;
+
+            foreach (char delimiter in GroupDelimiters)
+            {
+                token.ExpandedValue = token.ExpandedValue.Replace(delimiter.ToString(), string.Empty);
+
+            }
 
         }
         
@@ -27,3 +38,4 @@ public class Expander : IExpander
     }
 
 }
+

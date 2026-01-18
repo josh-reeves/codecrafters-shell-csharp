@@ -7,20 +7,22 @@ public class Echo : ShellCommand
     public Echo(IShell shell) : base(shell) {}
 
     public override void Execute(object? args)
-    {                
+    { 
+        StandardOutput = string.Empty;
+                       
         if (args is null)
         {
             return;
 
         }
 
-        string[] argList = args as string[] ?? [];
+        IList<string> argList = args as IList<string> ?? [];
 
-        for (int i = 0; i < argList.Length; i++)
+        for (int i = 0; i < argList.Count; i++)
         {
             StandardOutput += argList[i];
 
-            if (i == argList.Length - 1)
+            if (i == argList.Count - 1)
             {
                 StandardOutput += "\n";
 
@@ -33,11 +35,11 @@ public class Echo : ShellCommand
             
         }
 
-        if (Shell.IsStdOutRedirected)
+        if (IsStdOutRedirected)
         {
             return;
 
-        }   
+        }
 
         Console.Write(StandardOutput);
 

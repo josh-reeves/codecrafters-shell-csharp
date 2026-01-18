@@ -24,7 +24,11 @@ public class LexerDefaultState : LexerState
             
         }
 
-        controller.Lexer.CurrentToken = new WordToken();
+        controller.Lexer.CurrentToken = new WordToken()
+        {
+            Position = controller.Lexer.Position
+
+        };
 
     }
 

@@ -29,7 +29,11 @@ public class LexerRedirectStdOutState : LexerState
 
         }
 
-        controller.Lexer.CurrentToken = new RedirectStdOutToken();
+        controller.Lexer.CurrentToken = new RedirectStdOutToken()
+        {
+            Position = controller.Lexer.Position
+
+        };
 
     }
 

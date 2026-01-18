@@ -28,7 +28,11 @@ public class LexerAppendStdErrState : LexerState
             
         }
 
-        controller.Lexer.CurrentToken = new AppendStdErrToken();
+        controller.Lexer.CurrentToken = new AppendStdErrToken()
+        {
+            Position = controller.Lexer.Position
+
+        };
         
     }
 

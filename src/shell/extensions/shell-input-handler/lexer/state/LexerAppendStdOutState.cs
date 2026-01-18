@@ -28,7 +28,11 @@ public class LexerAppendStdOutState : LexerState
             
         }
 
-        controller.Lexer.CurrentToken = new AppendStdOutToken();
+        controller.Lexer.CurrentToken = new AppendStdOutToken()
+        {
+            Position = controller.Lexer.Position
+
+        };
         
     }
 

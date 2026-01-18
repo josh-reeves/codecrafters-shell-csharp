@@ -10,7 +10,7 @@ public class ChangeDirectory : ShellCommand
 
     public override void Execute(object? args)
     {
-        string dir = (args as string[] ?? [])[0].Replace(Shell.HomeChar.ToString(), Shell.HomeDir);
+        string dir = (args as string[])?.Length > 0 ? ((string[])args)[0].Replace(Shell.HomeChar.ToString(), Shell.HomeDir) : string.Empty;
         
         if (string.IsNullOrEmpty(dir))
         {
@@ -28,7 +28,7 @@ public class ChangeDirectory : ShellCommand
 
         StandardError += dir + invalidDirMsg;
 
-        if (Shell.IsStdErrRedirected)
+        if (IsStdErrRedirected)
         {
             return;
 

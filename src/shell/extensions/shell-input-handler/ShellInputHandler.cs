@@ -20,15 +20,13 @@ public class ShellInputHandler : IShellInputHandler
 
     public IParser Parser { get; private set;}
 
-    public IList<IToken> ReadInput(string input)
+    public ITree ReadInput(string input)
     {
         Queue<IToken> tokenizedInput = Lexer.Tokenize(input, new LexerStateController(Lexer, new LexerDefaultState()));
 
         tokenizedInput = Expander.Expand(tokenizedInput);
 
-        // CommandTree command = (CommandTree)Parser.Parse(tokenizedInput);
-
-        return tokenizedInput.ToList();
+        return (CommandTree)Parser.Parse(tokenizedInput);
 
     }
 

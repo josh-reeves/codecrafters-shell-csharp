@@ -4,14 +4,18 @@ namespace Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 public class RedirectorNode : ITreeNode
 {
-    public RedirectorNode(IToken fileToken, FileMode fileMode, ITreeNode? parent = null)
+    #region Constructors
+    public RedirectorNode(IToken data, IToken fileToken, FileMode fileMode, ITreeNode? parent = null)
     {
+        Data = data;
         FileToken = fileToken;
         FileMode = fileMode;
         Parent = parent;
         Children = [];
         
     }
+
+    public IToken Data;
 
     public IToken FileToken { get; }
 
@@ -20,5 +24,7 @@ public class RedirectorNode : ITreeNode
     public ITreeNode? Parent { get; set; }
 
     public IList<ITreeNode> Children { get; }
+
+    #endregion
 
 }

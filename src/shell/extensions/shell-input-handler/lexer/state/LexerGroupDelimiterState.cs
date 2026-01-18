@@ -1,7 +1,5 @@
 using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 
-
-
 namespace Shell.Extensions.ShellInputHandler.Lexer.State;
 
 public class LexerGroupDelimiterState : LexerState
@@ -20,10 +18,14 @@ public class LexerGroupDelimiterState : LexerState
         {
             return;
 
-        }
+        }        
 
-        controller.Lexer.CurrentToken = new WordToken();
+        controller.Lexer.CurrentToken = new WordToken()
+        {
+            Position = controller.Lexer.Position
 
+        };
+        
     }
 
     public override void Execute()
@@ -72,6 +74,14 @@ public class LexerGroupDelimiterState : LexerState
         {
             return;
             
+        }
+
+        if (controller.Lexer.TokenizedInput.Last().RawValue.Contains(terminator))
+        {
+            controller.Lexer.TokenizedInput.Last().RawValue += controller.Lexer.CurrentToken.RawValue;
+
+            return;
+
         }
 
         controller.Lexer.TokenizedInput.Enqueue(controller.Lexer.CurrentToken);

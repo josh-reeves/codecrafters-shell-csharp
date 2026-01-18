@@ -6,10 +6,6 @@ public interface IShell
 {
     public bool ShellIsActive { get; set; }
 
-    public bool IsStdOutRedirected { get; set; }
-
-    public bool IsStdErrRedirected { get; set; }
-
     public char CommandSeparator { get; }
     
     public char HomeChar { get;  }
@@ -21,8 +17,6 @@ public interface IShell
     public string Path { get; }
 
     public string HomeDir { get; }
-
-    public string InvalidCmdMsg { get; }
 
     public IList<string> PathList { get; }
 

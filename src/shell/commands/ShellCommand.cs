@@ -1,19 +1,25 @@
+using System.Diagnostics;
 using Interfaces;
+using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 namespace Shell.Commands;
 
-public abstract class ShellCommand : IShellCommand
+public class ShellCommand : IShellCommand
 {
-    private string standardOutput,
-                   standardError;
+    private string command;
 
-    private ITreeNode? iterator;
+    private IList<string> arguments;
 
     public ShellCommand(IShell shell)
     {
-        standardOutput = string.Empty;
-        standardError = string.Empty;
+        command = string.Empty;
+
+        arguments = new List<string>();
+
+        InvalidCmdMsg = ": command not found";
+        StandardOutput = string.Empty;
+        StandardError = string.Empty;
 
         Shell = shell;
 
@@ -21,54 +27,155 @@ public abstract class ShellCommand : IShellCommand
 
     protected IShell Shell { get; set; }
 
-    public string StandardOutput
-    {
-        get
-        {
-            string output = standardOutput;
+    public bool IsStdOutRedirected { get; set; }
 
-            standardOutput = string.Empty;
+    public bool IsStdErrRedirected { get; set; }
 
-            return output;
+    public string InvalidCmdMsg { get; set; }
 
-        }
+    public string StandardOutput { get; set; }
 
-        protected set
-        {
-            standardOutput = value;
-            
-        }
-
-    }
-
-    public string StandardError
-    {
-        get
-        {
-            string error = standardError;
-
-            standardError = string.Empty;
-
-            return error;
-
-        }
-
-        protected set
-        {
-            standardError = value;
-
-        }
-        
-    }
+    public string StandardError { get; set;}
 
     public virtual void Execute(object? args)
     {
-        if (args is not CommandTree command)
+        if (args is not CommandTree commandTree || commandTree.Root is null)
         {
             return;
             
         }
+
+        Stack<ITreeNode> nodes = new();
+
+        nodes.Push(commandTree.Root);
+
+        while (nodes.Count > 0)
+        {
+            ProcessNode(nodes.Peek());
+
+            foreach (ITreeNode node in nodes.Pop().Children.Reverse())
+            {
+                nodes.Push(node);
+                
+            }
+               
+        }
+
+        if (Shell.Builtins.ContainsKey(command))
+        {
+            IShellCommand builtin = Shell.Builtins[command];
+
+            builtin.IsStdOutRedirected = IsStdOutRedirected;
+            builtin.IsStdErrRedirected = IsStdErrRedirected;
+            
+            Shell.Builtins[command].Execute(arguments.ToArray());
+
+            StandardOutput = Shell.Builtins[command].StandardOutput;
+            StandardError = Shell.Builtins[command].StandardError;
+
+            return;
+            
+        }
+
+        if (Shell.IsExecutable([..Shell.Search(command, Shell.PathList)]))
+        {
+            ExecuteExternal(command, [..arguments]);
+
+            return;
+            
+        }
+
+        Console.WriteLine(command + InvalidCmdMsg);
         
+    }
+
+    private void ProcessNode(ITreeNode node)
+    {
+        switch(node)
+        {
+            case CommandNode commandNode:
+                command = commandNode.Data.ExpandedValue;
+
+                break;
+
+            case ArgumentNode argumentNode:
+                arguments.Add(argumentNode.Data.ExpandedValue);
+
+                break;
+
+            case RedirectorNode redirectorNode:
+                Redirect(redirectorNode);
+
+                break;
+            
+        }
+        
+    }
+
+    private void Redirect(RedirectorNode node)
+    {
+        FileStream stream = new FileStream(node.FileToken.ExpandedValue, node.FileMode, FileAccess.Write);
+
+        if (node.Data is RedirectStdOutToken or AppendStdOutToken)
+        {
+            Shell.OutWriters.Add(new StreamWriter(stream) {AutoFlush = true});
+
+            IsStdOutRedirected = true;
+           
+        }
+
+        if (node.Data is RedirectStdErrToken or AppendStdErrToken)
+        {
+            Shell.ErrWriters.Add(new StreamWriter(stream) {AutoFlush = true });
+
+            IsStdErrRedirected = true;
+            
+        }
+
+    }
+
+    /// <summary>
+    /// Execute a command that isn't built into the shell.
+    /// </summary>
+    /// <param name="command">The command to execute.</param>
+    /// <param name="args">The arguments to pass to the command.</param>
+    private void ExecuteExternal(string command, string[] args)
+    {
+        Process process = new()
+        {
+            StartInfo = new ProcessStartInfo()
+            {
+                FileName = command,
+                UseShellExecute = !IsStdOutRedirected && !IsStdErrRedirected,
+                RedirectStandardOutput = IsStdOutRedirected,
+                RedirectStandardError = IsStdErrRedirected
+
+            }
+            
+        };
+
+        foreach (string arg in args)
+        {
+            process.StartInfo.ArgumentList.Add(arg);
+
+        }
+
+        process.Start();
+
+        if (IsStdOutRedirected)
+        {
+            StandardOutput = process.StandardOutput.ReadToEnd();
+
+        }
+
+        if (IsStdErrRedirected)
+        {
+            StandardError = process.StandardError.ReadToEnd();
+            
+        }
+
+        process.WaitForExit();
+
     }
 
 }

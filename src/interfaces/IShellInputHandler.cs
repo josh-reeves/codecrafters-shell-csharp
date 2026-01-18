@@ -6,6 +6,6 @@ public interface IShellInputHandler
 
     public IExpander Expander { get; }
 
-    public IList<IToken> ReadInput(string input);
+    public ITree ReadInput(string input);
 
 }
