@@ -11,9 +11,7 @@ public class Type : ShellCommand
     public Type(IShell shell) : base(shell) {}
 
     public override void Execute(object? args)
-    {
-        StandardOutput = string.Empty;
-        
+    {        
         if (args is null)
         {
             return;

@@ -17,8 +17,8 @@ public class LexerGroupDelimiterState : LexerState
         if (Controller is not LexerStateController controller)
         {
             return;
-
-        }        
+ 
+        }
 
         controller.Lexer.CurrentToken = new WordToken()
         {
@@ -48,6 +48,16 @@ public class LexerGroupDelimiterState : LexerState
             return;
         }
 
+        if (controller.Lexer.RemainingText.Length > 1 && controller.Lexer.RemainingText [0..2] == (terminator.ToString() + terminator))
+        {
+            controller.Lexer.CurrentToken.RawValue += controller.Lexer.RemainingText[0..2];
+            controller.Lexer.RemainingText = controller.Lexer.RemainingText[2..];
+            controller.Lexer.Position += 2;
+
+            return;
+            
+        }
+
         if (controller.Lexer.RemainingText[0] == terminator)
         {
             controller.Lexer.CurrentToken.RawValue += controller.Lexer.RemainingText[0];
@@ -74,14 +84,6 @@ public class LexerGroupDelimiterState : LexerState
         {
             return;
             
-        }
-
-        if (controller.Lexer.TokenizedInput.Last().RawValue.Contains(terminator))
-        {
-            controller.Lexer.TokenizedInput.Last().RawValue += controller.Lexer.CurrentToken.RawValue;
-
-            return;
-
         }
 
         controller.Lexer.TokenizedInput.Enqueue(controller.Lexer.CurrentToken);

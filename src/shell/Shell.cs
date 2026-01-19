@@ -8,13 +8,17 @@ namespace Shell;
 public class Shell : IShell
 {
     #region Fields
+    private char prompt;
+
     private IShellInputHandler inputHandler;
     
     #endregion
 
     #region Constructor(s)
-    public Shell(string pathVar, char commandSeparator, char homeChar, IShellInputHandler shellInputHandler)
+    public Shell(char promptChar, string pathVar, char commandSeparator, char homeChar, IShellInputHandler shellInputHandler)
     {
+        prompt = promptChar;
+
         OutWriters = [];
         ErrWriters = [];
 
@@ -89,7 +93,7 @@ public class Shell : IShell
             {
                 Reset();
 
-                Console.Write("$ ");
+                Console.Write(prompt);
 
                 ShellCommand command = new(this);
 
@@ -97,9 +101,11 @@ public class Shell : IShell
 
                 if (command.IsStdOutRedirected)
                 {
+                    string output = command.StandardOutput;
+
                     foreach(StreamWriter writer in OutWriters)
                     {
-                        writer.Write(command.StandardOutput);
+                        writer.Write(output);
                         
                     }
 
@@ -107,9 +113,11 @@ public class Shell : IShell
 
                 if (command.IsStdErrRedirected)
                 {
+                    string error = command.StandardError;
+
                     foreach(StreamWriter writer in ErrWriters)
                     {
-                        writer.Write(command.StandardError);
+                        writer.Write(error);
                         
                     }
 

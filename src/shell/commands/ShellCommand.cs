@@ -7,19 +7,22 @@ namespace Shell.Commands;
 
 public class ShellCommand : IShellCommand
 {
-    private string command;
+    private string command,
+                   standardOutput,
+                   standardError;
 
     private IList<string> arguments;
 
     public ShellCommand(IShell shell)
     {
         command = string.Empty;
+        standardOutput = string.Empty;
+        standardError = string.Empty;
 
         arguments = new List<string>();
 
         InvalidCmdMsg = ": command not found";
-        StandardOutput = string.Empty;
-        StandardError = string.Empty;
+
 
         Shell = shell;
 
@@ -33,9 +36,35 @@ public class ShellCommand : IShellCommand
 
     public string InvalidCmdMsg { get; set; }
 
-    public string StandardOutput { get; set; }
+    public string StandardOutput
+    {
+        get
+        {
+            string result = standardOutput;
 
-    public string StandardError { get; set;}
+            standardOutput = string.Empty;
+
+            return result;
+
+        }
+
+        set => standardOutput = value;
+    }
+
+    public string StandardError
+    {
+        get
+        {
+            string result = standardError;
+
+            standardError = string.Empty;
+
+            return result;
+            
+        }
+
+        set => standardError = value;
+    }
 
     public virtual void Execute(object? args)
     {
