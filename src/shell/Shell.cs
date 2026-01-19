@@ -8,16 +8,16 @@ namespace Shell;
 public class Shell : IShell
 {
     #region Fields
-    private char prompt;
+    private string prompt;
 
     private IShellInputHandler inputHandler;
     
     #endregion
 
     #region Constructor(s)
-    public Shell(char promptChar, string pathVar, char commandSeparator, char homeChar, IShellInputHandler shellInputHandler)
+    public Shell(string promptSeq, string pathVar, char commandSeparator, char homeChar, IShellInputHandler shellInputHandler)
     {
-        prompt = promptChar;
+        prompt = promptSeq;
 
         OutWriters = [];
         ErrWriters = [];

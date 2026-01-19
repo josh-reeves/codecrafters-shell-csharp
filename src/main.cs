@@ -9,7 +9,7 @@ class Program
 {
     static void Main()
     {
-        Shell shell = new('$', "PATH", ' ', '~', new ShellInputHandler(new Lexer(), new Expander(), new Parser()));
+        Shell shell = new("$ ", "PATH", ' ', '~', new ShellInputHandler(new Lexer(), new Expander(), new Parser()));
 
         shell.Run();
         
