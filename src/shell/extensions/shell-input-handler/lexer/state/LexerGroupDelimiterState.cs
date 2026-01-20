@@ -32,7 +32,9 @@ public class LexerGroupDelimiterState : LexerState
             Position = controller.Lexer.Position
 
         };
-        
+
+        controller.ConsumeNext();
+      
     }
 
     public override void Execute()
@@ -81,7 +83,9 @@ public class LexerGroupDelimiterState : LexerState
 
         }
 
-        if (string.IsNullOrWhiteSpace(controller.Lexer.CurrentToken.RawValue))
+        string? value = controller.Lexer.CurrentToken.RawValue;
+
+        if (string.IsNullOrWhiteSpace(value) || value == string.Concat(terminator, terminator))
         {
             return;
             
