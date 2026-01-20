@@ -52,4 +52,18 @@ public class LexerStateController : ILexerStateController
 
     }
 
+    public void ConsumeNext(int numberOfCharacters = 1)
+    {
+        if (Lexer.CurrentToken is null)
+        {
+            return;
+
+        }
+
+        Lexer.CurrentToken.RawValue += Lexer.RemainingText[..numberOfCharacters];
+        Lexer.RemainingText = Lexer.RemainingText[numberOfCharacters..];
+        Lexer.Position += numberOfCharacters;
+
+    }
+
 }
