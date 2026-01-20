@@ -20,6 +20,13 @@ public class LexerGroupDelimiterState : LexerState
  
         }
 
+        if (controller.Lexer.CurrentToken?.RawValue.Contains(terminator) == true)
+        {
+            Console.WriteLine("test");
+            return;
+            
+        }
+
         controller.Lexer.CurrentToken = new WordToken()
         {
             Position = controller.Lexer.Position
@@ -36,6 +43,14 @@ public class LexerGroupDelimiterState : LexerState
 
         }
 
+        if (controller.Lexer.RemainingText[0] != terminator)
+        {
+            controller.ConsumeNext();
+
+            return;
+
+        }
+
         controller.ConsumeNext();
 
         if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
@@ -46,16 +61,10 @@ public class LexerGroupDelimiterState : LexerState
         
         }
 
-        if (controller.Lexer.RemainingText[0] != terminator)
-        {
-            return;
-
-        }
-
-        controller.ConsumeNext();
-
         if (controller.Lexer.RemainingText[0] == terminator)
         {
+            controller.ConsumeNext();
+
             return;
 
         }
@@ -72,9 +81,7 @@ public class LexerGroupDelimiterState : LexerState
 
         }
 
-        string? value = controller.Lexer.CurrentToken.RawValue;
-
-        if (string.IsNullOrWhiteSpace(value) || value == string.Concat(terminator, terminator))
+        if (string.IsNullOrWhiteSpace(controller.Lexer.CurrentToken.RawValue))
         {
             return;
             
