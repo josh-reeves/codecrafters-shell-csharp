@@ -30,7 +30,6 @@ public class LexerOperatorState : LexerState
         controller.AppendToken();
  
         controller.Lexer.CurrentToken = controller.Lexer.Operators[sequence].Invoke();
-
         controller.Lexer.CurrentToken.Position = controller.Lexer.Position;
 
 

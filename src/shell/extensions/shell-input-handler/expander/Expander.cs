@@ -27,7 +27,13 @@ public class Expander : IExpander
 
             foreach (char delimiter in GroupDelimiters)
             {
-                token.ExpandedValue = token.ExpandedValue.Replace(delimiter.ToString(), string.Empty);
+                if (token.ExpandedValue[0] == delimiter)
+                {
+                    token.ExpandedValue = token.RawValue.Replace(delimiter.ToString(), string.Empty);
+
+                    break;
+
+                }
 
             }
 
