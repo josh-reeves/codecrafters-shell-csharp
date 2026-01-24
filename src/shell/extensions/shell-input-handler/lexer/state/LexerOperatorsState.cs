@@ -27,11 +27,12 @@ public class LexerOperatorState : LexerState
 
         }
 
-        controller.Lexer.CurrentToken = new RedirectStdOutToken()
-        {
-            Position = controller.Lexer.Position
+        controller.AppendToken();
+ 
+        controller.Lexer.CurrentToken = controller.Lexer.Operators[sequence].Invoke();
 
-        };
+        controller.Lexer.CurrentToken.Position = controller.Lexer.Position;
+
 
     }
 
@@ -43,17 +44,7 @@ public class LexerOperatorState : LexerState
 
         }
 
-        if (controller.Lexer.CurrentToken.RawValue == sequence)
-        {
-            controller.Transition(new LexerDefaultState());
-
-            return;
-
-        }
-
-        controller.Lexer.CurrentToken.RawValue += controller.Lexer.RemainingText[0];
-        controller.Lexer.RemainingText = controller.Lexer.RemainingText[1..];
-        controller.Lexer.Position++;
+        controller.ConsumeNext();
 
         if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
         {
@@ -63,23 +54,11 @@ public class LexerOperatorState : LexerState
             
         }
 
-    }
-
-    public override void Exit()
-    {
-        if (Controller is not LexerStateController controller || controller.Lexer.CurrentToken is null)
+        if (controller.Lexer.CurrentToken.RawValue == sequence)
         {
-            return;
+            controller.Transition(new LexerDefaultState());
 
         }
-
-        if (string.IsNullOrWhiteSpace(controller.Lexer.CurrentToken.RawValue))
-        {
-            return;
-            
-        }
-
-        controller.Lexer.TokenizedInput.Enqueue(controller.Lexer.CurrentToken);
 
     }
 

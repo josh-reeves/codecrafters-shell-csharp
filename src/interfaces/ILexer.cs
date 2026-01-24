@@ -12,7 +12,7 @@ public interface ILexer
 
     public Queue<IToken> TokenizedInput { get; set; }
 
-    public IDictionary<string, IState> Operators { get; }
+    public IDictionary<string, Func<IToken>> Operators { get; }
 
     public IDictionary<char, IState> GroupDelimiters { get;}
 

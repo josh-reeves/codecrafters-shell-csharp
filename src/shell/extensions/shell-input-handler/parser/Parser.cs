@@ -13,17 +13,26 @@ public class Parser : IParser
     #region Methods
     public ITree Parse(Queue<IToken> tokens)
     {   
-        CommandTree ast = new();
-
-        if (tokens.Count <= 0)
+        try
         {
+            CommandTree ast = new();
+
+            if (tokens.Count <= 0)
+            {
+                return ast;
+
+            }
+
+            ast.Root = ParseCommand(tokens);    
+
             return ast;
-
+           
         }
-
-        ast.Root = ParseCommand(tokens);    
-
-        return ast;
+        catch
+        {
+            throw new Exception("A parsing error occurred.");
+            
+        }
 
     }
 

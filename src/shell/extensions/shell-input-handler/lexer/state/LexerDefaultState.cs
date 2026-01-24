@@ -48,7 +48,7 @@ public class LexerDefaultState : LexerState
 
             if (controller.Lexer.Operators.ContainsKey(seq))
             {
-                controller.Transition(controller.Lexer.Operators[seq]);
+                controller.Transition(new LexerOperatorState(seq));
                 return;
 
             }

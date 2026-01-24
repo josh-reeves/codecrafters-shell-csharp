@@ -10,7 +10,7 @@ public class Lexer : ILexer
         RemainingText = string.Empty;
         Separators = [];
         TokenizedInput =[];
-        Operators = new Dictionary<string, IState>();
+        Operators = new Dictionary<string, Func<IToken>>();
         GroupDelimiters = new Dictionary<char, IState>();
         
     }
@@ -25,7 +25,7 @@ public class Lexer : ILexer
 
     public Queue<IToken> TokenizedInput { get; set; }
 
-    public IDictionary<string, IState> Operators { get; }
+    public IDictionary<string, Func<IToken>> Operators { get; }
 
     public IDictionary<char, IState> GroupDelimiters { get; }
 
