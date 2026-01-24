@@ -54,6 +54,12 @@ public class LexerGroupDelimiterState : LexerState
 
         }
 
+        if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
+        {            
+            controller.Transition(new LexerEOFState());
+        
+        }
+
     }
 
     private void MissingDelimiterCheck()
