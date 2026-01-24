@@ -38,20 +38,20 @@ public class LexerGroupDelimiterState : LexerState
 
         controller.ConsumeNext();
 
-        MissingDelimiterCheck();
-
-        if (controller.Lexer.RemainingText[0] == terminator)
-        {
-            controller.Transition(new LexerDefaultState());
-
-        }
-
-        controller.ConsumeNext();
-
         if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
         {            
             controller.Transition(new LexerEOFState());
+
+            return;
         
+        }
+
+        if (controller.Lexer.RemainingText[0] == terminator)
+        {
+            controller.ConsumeNext();
+
+            controller.Transition(new LexerDefaultState());
+
         }
 
     }
