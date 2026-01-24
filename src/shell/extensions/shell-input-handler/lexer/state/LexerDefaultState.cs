@@ -33,7 +33,6 @@ public class LexerDefaultState : LexerState
 
         }
 
-
         if (controller.Lexer.Separators.Contains(controller.Lexer.RemainingText[0]))
         {
             controller.Transition(new ParserSeparatorState());

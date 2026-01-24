@@ -68,7 +68,7 @@ public class LexerStateController : ILexerStateController
 
     public void AppendToken()
     {
-        if (Lexer.CurrentToken is null)
+        if (string.IsNullOrWhiteSpace(Lexer.CurrentToken?.RawValue))
         {
             return;
 
