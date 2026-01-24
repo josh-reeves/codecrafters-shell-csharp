@@ -26,7 +26,7 @@ public class Type : ShellCommand
 
             foreach(string file in Shell.Search(arg, Shell.PathList))       
             {
-                if (Shell.IsExecutable([..Shell.Search(arg, Shell.PathList)]))
+                if (Shell.IsExecutable([file]))
                 {
                     result = arg + " is " + file + '\n';
 
