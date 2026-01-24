@@ -12,6 +12,8 @@ public class LexerEOFState : LexerState
 
         }
 
+        controller.AppendToken();
+
         /* If the program somehow ended up here prematurely, this will ensure
          *  completion of any calling loops based on the remaining text.*/
         controller.Lexer.RemainingText = string.Empty; 

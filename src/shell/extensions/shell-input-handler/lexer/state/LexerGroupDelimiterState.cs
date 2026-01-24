@@ -20,79 +20,55 @@ public class LexerGroupDelimiterState : LexerState
  
         }
 
-        if (controller.Lexer.CurrentToken?.RawValue.Contains(terminator) == true)
-        {
-            Console.WriteLine("test");
-            return;
-            
-        }
-
-        controller.Lexer.CurrentToken = new WordToken()
+        controller.Lexer.CurrentToken ??= new WordToken()
         {
             Position = controller.Lexer.Position
 
         };
 
-        controller.ConsumeNext();
-      
     }
 
     public override void Execute()
     {
-        if (Controller is not LexerStateController controller || controller.Lexer.CurrentToken is null)
+        if (Controller is not LexerStateController controller)
         {
             return;
 
         }
 
-        if (controller.Lexer.RemainingText[0] != terminator)
-        {
-            controller.ConsumeNext();
+        controller.ConsumeNext();
 
-            return;
+        MissingDelimiterCheck();
+
+        if (controller.Lexer.RemainingText[0] == terminator)
+        {
+            controller.Transition(new LexerDefaultState());
 
         }
 
         controller.ConsumeNext();
 
         if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
-        {
+        {            
             controller.Transition(new LexerEOFState());
-            
-            return;
         
         }
 
-        if (controller.Lexer.RemainingText[0] == terminator)
-        {
-            controller.ConsumeNext();
-
-            return;
-
-        }
-
-        controller.Transition(new LexerDefaultState());
-
     }
 
-    public override void Exit()
+    private void MissingDelimiterCheck()
     {
-        if (Controller is not LexerStateController controller || controller.Lexer.CurrentToken is null)
+        if (Controller is not LexerStateController controller || !string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
         {
             return;
 
         }
 
-        string? value = controller.Lexer.CurrentToken.RawValue;
+        string prompt = "delim> ";
 
-        if (string.IsNullOrWhiteSpace(value) || value == string.Concat(terminator, terminator))
-        {
-            return;
-            
-        }
-
-        controller.Lexer.TokenizedInput.Enqueue(controller.Lexer.CurrentToken);
-
+        Console.Write(prompt);
+        controller.Lexer.RemainingText += Console.ReadLine();
+        
     }
 
 }

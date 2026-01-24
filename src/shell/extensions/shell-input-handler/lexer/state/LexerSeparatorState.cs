@@ -4,6 +4,18 @@ public class ParserSeparatorState : LexerState
 {
     public ParserSeparatorState() {}
 
+    public override void Enter()
+    {
+        if (Controller is not LexerStateController controller)
+        {
+            return;
+
+        }
+                
+        controller.AppendToken();
+
+    }
+
     public override void Execute()
     {
         if (Controller is not LexerStateController controller)

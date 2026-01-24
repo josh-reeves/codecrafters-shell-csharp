@@ -66,4 +66,20 @@ public class LexerStateController : ILexerStateController
 
     }
 
+    public void AppendToken()
+    {
+        if (Lexer.CurrentToken is null)
+        {
+            return;
+
+        }
+
+        IToken token = Lexer.CurrentToken;
+
+        Lexer.TokenizedInput.Enqueue(token);
+
+        Lexer.CurrentToken = null;
+
+    }
+
 }

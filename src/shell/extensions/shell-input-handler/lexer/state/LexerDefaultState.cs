@@ -1,3 +1,4 @@
+using Interfaces;
 using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 
 
@@ -6,8 +7,6 @@ namespace Shell.Extensions.ShellInputHandler.Lexer.State;
 
 public class LexerDefaultState : LexerState
 {
-    private int maxOpLength;
-
     public LexerDefaultState() {}
 
     public override void Enter()
@@ -18,13 +17,7 @@ public class LexerDefaultState : LexerState
 
         }
 
-        foreach (string op in controller.Lexer.Operators.Keys)
-        {
-            maxOpLength = op.Length > maxOpLength ? op.Length : maxOpLength;
-            
-        }
-
-        controller.Lexer.CurrentToken = new WordToken()
+        controller.Lexer.CurrentToken ??= new WordToken()
         {
             Position = controller.Lexer.Position
 
@@ -34,11 +27,12 @@ public class LexerDefaultState : LexerState
 
     public override void Execute() 
     {
-        if (Controller is not LexerStateController controller || controller.Lexer.CurrentToken is null)
+        if (Controller is not LexerStateController controller)
         {
             return;
 
         }
+
 
         if (controller.Lexer.Separators.Contains(controller.Lexer.RemainingText[0]))
         {
@@ -48,7 +42,7 @@ public class LexerDefaultState : LexerState
             
         }
 
-        for (int i = maxOpLength; i > 0; i--)
+        for (int i = GetMaxOperatorLength(controller); i > 0; i--)
         {
             string seq = controller.Lexer.RemainingText.Length >= i ? controller.Lexer.RemainingText[0..i] : string.Empty;
 
@@ -69,9 +63,7 @@ public class LexerDefaultState : LexerState
 
         }
 
-        controller.Lexer.CurrentToken.RawValue += controller.Lexer.RemainingText[0];
-        controller.Lexer.RemainingText = controller.Lexer.RemainingText[1..];
-        controller.Lexer.Position++;
+        controller.ConsumeNext();
 
         if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
         {
@@ -81,22 +73,18 @@ public class LexerDefaultState : LexerState
         
     }
 
-    public override void Exit()
+    private int GetMaxOperatorLength(ILexerStateController controller)
     {
-        if (Controller is not LexerStateController controller)
-        {
-            return;
+        int maxLength = 0;
 
-        }
-
-        if (string.IsNullOrWhiteSpace(controller.Lexer.CurrentToken?.RawValue))
+        foreach (string op in controller.Lexer.Operators.Keys)
         {
-            return;
+            maxLength = op.Length > maxLength ? op.Length : maxLength;
             
         }
 
-        controller.Lexer.TokenizedInput.Enqueue(controller.Lexer.CurrentToken);
-
+        return maxLength;
+        
     }
 
 }
