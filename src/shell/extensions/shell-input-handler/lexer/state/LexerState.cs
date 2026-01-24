@@ -12,6 +12,20 @@ public abstract class LexerState : IState
 
     public virtual void Execute() {} 
 
-    public virtual void Exit() {}
+    public virtual void Exit()
+    {
+        if (Controller is not LexerStateController controller)
+        {
+            return;
+
+        }
+
+        if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
+        {            
+            controller.AppendToken();
+        
+        }
+        
+    }
 
 }

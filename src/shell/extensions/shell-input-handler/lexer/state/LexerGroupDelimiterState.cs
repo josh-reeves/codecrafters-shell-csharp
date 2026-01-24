@@ -40,7 +40,7 @@ public class LexerGroupDelimiterState : LexerState
 
         if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
         {            
-            controller.Transition(new LexerEOFState());
+            controller.Transition(new LexerDefaultState());
 
             return;
         
@@ -52,12 +52,6 @@ public class LexerGroupDelimiterState : LexerState
 
             controller.Transition(new LexerDefaultState());
 
-        }
-
-        if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
-        {            
-            controller.Transition(new LexerEOFState());
-        
         }
 
     }

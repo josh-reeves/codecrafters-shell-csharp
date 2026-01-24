@@ -48,7 +48,7 @@ public class LexerOperatorState : LexerState
 
         if (string.IsNullOrWhiteSpace(controller.Lexer.RemainingText))
         {
-            controller.Transition(new LexerEOFState());
+            controller.Transition(new LexerDefaultState());
 
             return;
             
