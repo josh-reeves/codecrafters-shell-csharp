@@ -20,21 +20,19 @@ public class Expander : IExpander
 
         }
 
-        // Quote removal:
         foreach (IToken token in tokens)
         {
             token.ExpandedValue = token.RawValue;
 
-            foreach (char delimiter in GroupDelimiters)
+            // Quote removal:
+            int delimiterIndex = token.ExpandedValue.IndexOfAny(GroupDelimiters.ToArray());
+
+            if (delimiterIndex != -1)
             {
-                if (token.ExpandedValue[0] == delimiter)
-                {
-                    token.ExpandedValue = token.RawValue.Replace(delimiter.ToString(), string.Empty);
+                char delimiter = token.ExpandedValue[delimiterIndex];
 
-                    break;
-
-                }
-
+                token.ExpandedValue = token.ExpandedValue.Replace(delimiter.ToString(), string.Empty);
+                
             }
 
         }
