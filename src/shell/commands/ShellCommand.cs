@@ -7,12 +7,16 @@ namespace Shell.Commands;
 
 public class ShellCommand : IShellCommand
 {
+    #region Fields
     private string command,
                    standardOutput,
                    standardError;
 
     private IList<string> arguments;
 
+    #endregion
+    
+    #region Constructor(s)
     public ShellCommand(IShell shell)
     {
         command = string.Empty;
@@ -23,11 +27,13 @@ public class ShellCommand : IShellCommand
 
         InvalidCmdMsg = ": command not found";
 
-
         Shell = shell;
 
     }
 
+    #endregion
+
+    #region Properties
     protected IShell Shell { get; set; }
 
     public bool IsStdOutRedirected { get; set; }
@@ -66,6 +72,9 @@ public class ShellCommand : IShellCommand
         set => standardError = value;
     }
 
+    #endregion
+
+    #region Methods
     public virtual void Execute(object? args)
     {
         if (args is not CommandTree commandTree || commandTree.Root is null)
@@ -206,5 +215,7 @@ public class ShellCommand : IShellCommand
         process.WaitForExit();
 
     }
+
+    #endregion
 
 }

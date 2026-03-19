@@ -2,7 +2,6 @@ using Interfaces;
 
 namespace Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 
-
 public abstract class ShellToken : IToken
 {
     public ShellToken()

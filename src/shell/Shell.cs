@@ -1,7 +1,5 @@
 using Interfaces;
 using Shell.Commands;
-using Shell.Extensions.ShellInputHandler.Lexer.State;
-using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 using Type = Shell.Commands.Type;
 
 namespace Shell;
@@ -27,22 +25,6 @@ public class Shell : IShell
         CommandSeparator = commandSeparator;
         HomeChar = homeChar;
         inputHandler = shellInputHandler;
-
-        inputHandler.Lexer.Separators.Add(CommandSeparator);
-        inputHandler.Lexer.GroupDelimiters.Add('\'', new LexerGroupDelimiterState('\''));
-        inputHandler.Lexer.GroupDelimiters.Add('"', new LexerGroupDelimiterState('"'));
-        inputHandler.Lexer.Operators.Add(">", () => new RedirectStdOutToken());
-        inputHandler.Lexer.Operators.Add("1>", () =>new RedirectStdOutToken());
-        inputHandler.Lexer.Operators.Add("2>", () => new RedirectStdErrToken());
-        inputHandler.Lexer.Operators.Add(">>", () => new AppendStdOutToken());
-        inputHandler.Lexer.Operators.Add("1>>", () => new AppendStdOutToken());
-        inputHandler.Lexer.Operators.Add("2>>", () => new AppendStdErrToken());
-        
-        foreach (char key in inputHandler.Lexer.GroupDelimiters.Keys)
-        {
-            inputHandler.Expander.GroupDelimiters.Add(key);
-
-        }
 
         Builtins = new Dictionary<string, IShellCommand>()
         {
@@ -98,7 +80,7 @@ public class Shell : IShell
 
                 ShellCommand command = new(this);
 
-                command.Execute(inputHandler.ReadInput(Console.ReadLine() ?? string.Empty));
+                command.Execute(inputHandler.HandleInput(Console.ReadLine() ?? string.Empty));
 
                 if (command.IsStdOutRedirected)
                 {

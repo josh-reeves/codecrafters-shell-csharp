@@ -4,20 +4,34 @@ namespace Shell.Extensions.ShellInputHandler.Lexer.State;
 
 public class LexerStateController : ILexerStateController
 {
-    private IState defaultState,
-                   currentState;
+    private IState currentState;
 
-    public LexerStateController(ILexer lexer, IState initialState)
+    #region Constructor(s)
+    public LexerStateController(IState defaultState, IDictionary<IState, Func<IToken>>? tokenMap = null)
     {
-        Lexer = lexer;
+        Position = 0;
+        RemainingText = string.Empty;   
+        TokenizedInput =[];
 
-        currentState = defaultState = initialState;
-        currentState.Controller = this;
+        CurrentState = currentState = DefaultState = defaultState;
+
+        StateMap = new Dictionary<string, IState>();
+        TokenMap = tokenMap ?? new Dictionary<IState, Func<IToken>>();
+
         CurrentState.Enter();
 
     }
 
-    public ILexer Lexer { get; set;}
+    #endregion
+
+    #region Properties
+    public int Position { get; set; }
+
+    public string RemainingText { get; set; }
+
+    public IToken? CurrentToken { get; set; }
+
+    public IState DefaultState { get; private set; }
 
     public IState CurrentState
     {
@@ -32,9 +46,17 @@ public class LexerStateController : ILexerStateController
         
     }
 
+    public Queue<IToken> TokenizedInput { get; set; }
+
+    public IDictionary<string, IState> StateMap { get; }
+
+    public IDictionary<IState, Func<IToken>> TokenMap { get; }
+
+    #endregion
+    
+    #region Methods
     public void Transition(IState state)
     {
-
         try
         {
             CurrentState.Exit();
@@ -46,40 +68,43 @@ public class LexerStateController : ILexerStateController
         }
         catch
         {
-            CurrentState = defaultState;
+            CurrentState = DefaultState;
 
         }
 
     }
 
-    public void ConsumeNext(int numberOfCharacters = 1)
+    public void ConsumeInput(int numberOfCharacters = 1)
     {
-        if (Lexer.CurrentToken is null)
+        numberOfCharacters = numberOfCharacters > RemainingText.Length ? RemainingText.Length : numberOfCharacters;
+
+        if (CurrentToken is not null)
         {
-            return;
+            CurrentToken.RawValue += RemainingText[..numberOfCharacters];
 
         }
 
-        Lexer.CurrentToken.RawValue += Lexer.RemainingText[..numberOfCharacters];
-        Lexer.RemainingText = Lexer.RemainingText[numberOfCharacters..];
-        Lexer.Position += numberOfCharacters;
+        RemainingText = RemainingText[numberOfCharacters..];
+        Position += numberOfCharacters;
 
     }
 
     public void AppendToken()
     {
-        if (string.IsNullOrWhiteSpace(Lexer.CurrentToken?.RawValue))
+        if (string.IsNullOrWhiteSpace(CurrentToken?.RawValue))
         {
             return;
 
         }
 
-        IToken token = Lexer.CurrentToken;
+        IToken token = CurrentToken;
 
-        Lexer.TokenizedInput.Enqueue(token);
+        TokenizedInput.Enqueue(token);
 
-        Lexer.CurrentToken = null;
+        CurrentToken = null;
 
     }
 
+    #endregion
+    
 }

@@ -1,32 +1,34 @@
 using Interfaces;
-using Shell.Extensions.ShellInputHandler.Lexer.State;
-using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 namespace Shell.Extensions.ShellInputHandler;
 
 public class ShellInputHandler : IShellInputHandler
 {
-    public ShellInputHandler(ILexer shellLexer, IExpander shellExpander, IParser parser)
+    public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser)
     {
-        Lexer = shellLexer;
-        Expander = shellExpander;
+        Lexer = lexer;
+        Expander = expander;
         Parser = parser;
+
+        InputMap = new Dictionary<string, IInputMap>();
         
     }
 
-    public ILexer Lexer { get; private set; }
+    public ILexer Lexer { get; set; }
 
-    public IExpander Expander { get; private set; }
+    public IExpander Expander { get; set; }
 
-    public IParser Parser { get; private set;}
+    public IParser Parser { get; set;}
 
-    public ITree ReadInput(string input)
-    {
-        Queue<IToken> tokenizedInput = Lexer.Tokenize(input, new LexerStateController(Lexer, new LexerDefaultState()));
+    public IDictionary<string, IInputMap> InputMap { get; }
 
-        tokenizedInput = Expander.Expand(tokenizedInput);
+    public ITree HandleInput(string input)
+    {        
+        Queue<IToken> tokenizedInput = Lexer?.Tokenize(input) ?? [];
 
-        return (CommandTree)Parser.Parse(tokenizedInput);
+        tokenizedInput = Expander?.Expand(tokenizedInput) ?? tokenizedInput;
+
+        return Parser.Parse(tokenizedInput);
 
     }
 

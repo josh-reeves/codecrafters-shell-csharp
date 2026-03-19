@@ -4,14 +4,24 @@ namespace Shell.Extensions.ShellInputHandler.Expander;
 
 public class Expander : IExpander
 {
+    #region Constructor(s)
     public Expander()
     {
         GroupDelimiters = [];
+        EscapeCharacters = [];
         
     }
 
+    #endregion
+
+    #region Properties
     public IList<char> GroupDelimiters { get; private set; }
 
+    public IList<char> EscapeCharacters { get; private set; }
+
+    #endregion
+
+    #region Methods
     public Queue<IToken> Expand(Queue<IToken> tokens)
     {
         if (tokens.Count <= 0 )
@@ -24,22 +34,53 @@ public class Expander : IExpander
         {
             token.ExpandedValue = token.RawValue;
 
-            // Quote removal:
-            int delimiterIndex = token.ExpandedValue.IndexOfAny(GroupDelimiters.ToArray());
-
-            if (delimiterIndex != -1)
-            {
-                char delimiter = token.ExpandedValue[delimiterIndex];
-
-                token.ExpandedValue = token.ExpandedValue.Replace(delimiter.ToString(), string.Empty);
-                
-            }
+            token.ExpandedValue = RemoveQuotes(token.ExpandedValue);
 
         }
         
         return tokens;
 
     }
+
+    private string RemoveQuotes(string input)
+    {
+        string result = input;
+
+        foreach (char chr in result)
+        {
+            if (EscapeCharacters.Contains(chr))
+            {
+                result.Remove(result.IndexOf(chr), 1);
+
+                continue;
+
+            }
+
+            if (GroupDelimiters.Contains(chr))
+            {
+                
+            }
+
+        }
+
+        int delimiterIndex = result.IndexOfAny(GroupDelimiters.ToArray());
+
+        if (delimiterIndex == -1)
+        {
+            return result;
+
+        }
+
+        char delimiter = result[delimiterIndex];
+
+        result = result.Replace(delimiter.ToString(), string.Empty);
+
+
+        return result;
+        
+    }
+
+    #endregion
 
 }
 

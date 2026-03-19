@@ -4,40 +4,28 @@ namespace Shell.Extensions.ShellInputHandler.Lexer;
 
 public class Lexer : ILexer
 {
-    public Lexer()
+    public Lexer(ILexerStateController controller)
     {
-        Position = 0;
-        RemainingText = string.Empty;
-        Separators = [];
-        TokenizedInput =[];
-        Operators = new Dictionary<string, Func<IToken>>();
-        GroupDelimiters = new Dictionary<char, IState>();
+        RawInput = string.Empty;
+        Controller = controller;
         
     }
 
-    public int Position { get; set; }
+    public string RawInput { get; private set; }
 
-    public string RemainingText { get; set; }
+    public ILexerStateController Controller { get; }
 
-    public IToken? CurrentToken { get; set; }
+    public Queue<IToken> TokenizedInput { get => Controller.TokenizedInput; }
 
-    public IList<char> Separators { get; set;}
-
-    public Queue<IToken> TokenizedInput { get; set; }
-
-    public IDictionary<string, Func<IToken>> Operators { get; }
-
-    public IDictionary<char, IState> GroupDelimiters { get; }
-
-    public Queue<IToken> Tokenize(string input, ILexerStateController controller)
+    public Queue<IToken> Tokenize(string input)
     {
-        RemainingText = input;
         TokenizedInput.Clear();
-        Position = 0;
+ 
+        Controller.RemainingText = RawInput = input;
 
-        while (!string.IsNullOrWhiteSpace(RemainingText))
+        while (!string.IsNullOrWhiteSpace(Controller.RemainingText))
         {
-            controller.CurrentState.Execute();
+            Controller.CurrentState.Execute();
 
         }
 

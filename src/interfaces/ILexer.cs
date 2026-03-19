@@ -2,20 +2,16 @@ namespace Interfaces;
 
 public interface ILexer
 {
-    public int Position { get; set; }
+    #region Properties
+    public string RawInput { get; }
 
-    public string RemainingText { get; set; }
+    public ILexerStateController Controller { get; }
 
-    public IToken? CurrentToken { get; set; }
+    public Queue<IToken> TokenizedInput { get; }
 
-    public IList<char> Separators { get; set;}
+    #endregion
 
-    public Queue<IToken> TokenizedInput { get; set; }
-
-    public IDictionary<string, Func<IToken>> Operators { get; }
-
-    public IDictionary<char, IState> GroupDelimiters { get;}
-
+    #region Methodes
     /// <summary>
     /// Lexes input string into a series of tokens.
     /// </summary>
@@ -23,7 +19,9 @@ public interface ILexer
     /// <param name="separators"></param>
     /// <param name="operators"></param>
     /// <param name="groupDelimiters"></param>
-    /// <returns></returns>
-    public Queue<IToken> Tokenize(string input, ILexerStateController controller);
+    /// <returns>A queue of objects implementing IToken containing raw data for expansion.</returns>
+    public Queue<IToken> Tokenize(string input);
+
+    #endregion
       
 }
