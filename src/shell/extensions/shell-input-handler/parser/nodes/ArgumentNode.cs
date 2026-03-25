@@ -4,7 +4,7 @@ namespace Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 public class ArgumentNode : ITreeNode
 {
-    public ArgumentNode(IToken data, ITreeNode? parent = null)
+    public ArgumentNode(IShellToken data, ITreeNode? parent = null)
     {
         Data = data;
         Parent = parent;
@@ -12,7 +12,7 @@ public class ArgumentNode : ITreeNode
         
     }
 
-    public IToken Data { get; }
+    public IShellToken Data { get; }
 
     public ITreeNode? Parent { get; set; }
 

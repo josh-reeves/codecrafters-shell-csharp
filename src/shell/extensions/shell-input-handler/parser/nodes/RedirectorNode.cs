@@ -5,7 +5,7 @@ namespace Shell.Extensions.ShellInputHandler.Parser.Nodes;
 public class RedirectorNode : ITreeNode
 {
     #region Constructors
-    public RedirectorNode(IToken data, IToken fileToken, FileMode fileMode, ITreeNode? parent = null)
+    public RedirectorNode(IShellToken data, IShellToken fileToken, FileMode fileMode, ITreeNode? parent = null)
     {
         Data = data;
         FileToken = fileToken;
@@ -15,9 +15,9 @@ public class RedirectorNode : ITreeNode
         
     }
 
-    public IToken Data;
+    public IShellToken Data;
 
-    public IToken FileToken { get; }
+    public IShellToken FileToken { get; }
 
     public FileMode FileMode { get; set; }
 

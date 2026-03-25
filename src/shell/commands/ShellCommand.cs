@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Interfaces;
-using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 namespace Shell.Commands;
@@ -77,7 +76,7 @@ public class ShellCommand : IShellCommand
     #region Methods
     public virtual void Execute(object? args)
     {
-        if (args is not CommandTree commandTree || commandTree.Root is null)
+        if (args is not ITree commandTree || commandTree.Root is null)
         {
             return;
             
@@ -154,7 +153,7 @@ public class ShellCommand : IShellCommand
     {
         FileStream stream = new FileStream(node.FileToken.ExpandedValue, node.FileMode, FileAccess.Write);
 
-        if (node.Data is RedirectStdOutToken or AppendStdOutToken)
+        if (node.Data.Type is TokenType.RedirectStdOut or TokenType.AppendStdOut)
         {
             Shell.OutWriters.Add(new StreamWriter(stream) {AutoFlush = true});
 
@@ -162,7 +161,7 @@ public class ShellCommand : IShellCommand
            
         }
 
-        if (node.Data is RedirectStdErrToken or AppendStdErrToken)
+        if (node.Data.Type is TokenType.RedirectStdErr or TokenType.AppendStdErr)
         {
             Shell.ErrWriters.Add(new StreamWriter(stream) {AutoFlush = true });
 

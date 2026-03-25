@@ -1,6 +1,6 @@
 using Interfaces;
 
-namespace Shell.Extensions.ShellInputHandler.Parser.Nodes;
+namespace Shell.Extensions.ShellInputHandler.Parser;
 
 public class CommandTree : ITree
 {

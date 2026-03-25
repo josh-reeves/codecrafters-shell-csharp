@@ -3,7 +3,6 @@ using Shell.Extensions.ShellInputHandler;
 using Shell.Extensions.ShellInputHandler.Expander;
 using Shell.Extensions.ShellInputHandler.Lexer;
 using Shell.Extensions.ShellInputHandler.Lexer.State;
-using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 using Shell.Extensions.ShellInputHandler.Parser;
 
 namespace Shell;
@@ -15,32 +14,32 @@ class Program
         char commandSeparator = ' ';
  
         IState defaultState = new LexerDefaultState();
+        
         ShellInputHandler inputHandler = new ShellInputHandler(
             new Lexer(
                 new LexerStateController(
-                    defaultState, 
-                    new Dictionary<IState, Func<IToken>> {{ defaultState, () => new WordToken() }})),
+                        defaultState, 
+                        new Dictionary<IState, Func<IToken>> 
+                        {
+                            { defaultState, () => new ShellToken(TokenType.Word) }
+                            
+                        })),
             new Expander(),
-            new Parser());
-
-        inputHandler.Lexer.Controller.StateMap.Add(commandSeparator.ToString(), new LexerSeparatorState());
-        inputHandler.Lexer.Controller.StateMap.Add("\'", new LexerGroupDelimiterState('\''));
-        inputHandler.Lexer.Controller.StateMap.Add("\"", new LexerGroupDelimiterState('"'));
-        inputHandler.Lexer.Controller.StateMap.Add(">", new LexerOperatorState(">"));
-        inputHandler.Lexer.Controller.StateMap.Add("1>", new LexerOperatorState("1>"));
-        inputHandler.Lexer.Controller.StateMap.Add("2>", new LexerOperatorState("2>"));
-        inputHandler.Lexer.Controller.StateMap.Add(">>", new LexerOperatorState(">>"));
-        inputHandler.Lexer.Controller.StateMap.Add("1>>", new LexerOperatorState("1>>"));
-        inputHandler.Lexer.Controller.StateMap.Add("2>>", new LexerOperatorState("2>>"));
-        
-        inputHandler.Lexer.Controller.TokenMap.Add(inputHandler.Lexer.Controller.StateMap["\'"], () => new WordToken());
-        inputHandler.Lexer.Controller.TokenMap.Add(inputHandler.Lexer.Controller.StateMap["\""], () => new WordToken());
-        inputHandler.Lexer.Controller.TokenMap.Add(inputHandler.Lexer.Controller.StateMap[">"], () => new RedirectStdOutToken());
-        inputHandler.Lexer.Controller.TokenMap.Add(inputHandler.Lexer.Controller.StateMap["1>"], () => new RedirectStdOutToken());
-        inputHandler.Lexer.Controller.TokenMap.Add(inputHandler.Lexer.Controller.StateMap["2>"], () => new RedirectStdErrToken());
-        inputHandler.Lexer.Controller.TokenMap.Add(inputHandler.Lexer.Controller.StateMap[">>"], () => new AppendStdOutToken());
-        inputHandler.Lexer.Controller.TokenMap.Add(inputHandler.Lexer.Controller.StateMap["1>>"], () => new AppendStdOutToken());
-        inputHandler.Lexer.Controller.TokenMap.Add(inputHandler.Lexer.Controller.StateMap["2>>"], () => new AppendStdErrToken());
+            new Parser(),
+            new Dictionary<string, IInputMap>
+            {
+                { commandSeparator.ToString(), new ShellInputHandler.InputMap(new LexerSeparatorState()) },
+                { "\'", new ShellInputHandler.InputMap(new LexerGroupDelimiterState('\''), () => new ShellToken(TokenType.Word), (str) => str.Replace("\'", string.Empty)) },
+                { "\"", new ShellInputHandler.InputMap(new LexerGroupDelimiterState('"'), () => new ShellToken(TokenType.Word), (str) => str.Replace("\"", string.Empty)) },
+                { ">", new ShellInputHandler.InputMap(new LexerOperatorState(">"), () => new ShellToken(TokenType.RedirectStdOut)) },
+                { "1>", new ShellInputHandler.InputMap(new LexerOperatorState("1>"), () => new ShellToken(TokenType.RedirectStdOut)) },
+                { "2>", new ShellInputHandler.InputMap(new LexerOperatorState("2>"), () => new ShellToken(TokenType.RedirectStdErr)) },
+                { ">>", new ShellInputHandler.InputMap(new LexerOperatorState(">>"), () => new ShellToken(TokenType.AppendStdOut)) },
+                { "1>>", new ShellInputHandler.InputMap(new LexerOperatorState("1>>"), () => new ShellToken(TokenType.AppendStdOut)) },
+                { "2>>", new ShellInputHandler.InputMap(new LexerOperatorState("2>>"), () => new ShellToken(TokenType.AppendStdErr)) },
+                { "\\", new ShellInputHandler.InputMap(null, null, (str) => str.Remove(str.IndexOf('\\'), 1)) }
+            
+            });
 
         Shell shell = new("$ ", "PATH", commandSeparator, '~', inputHandler);
 

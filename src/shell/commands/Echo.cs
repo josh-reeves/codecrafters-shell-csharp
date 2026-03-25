@@ -4,8 +4,12 @@ namespace Shell.Commands;
 
 public class Echo : ShellCommand
 {
+    #region Constructor(s)
     public Echo(IShell shell) : base(shell) {}
 
+    #endregion
+
+    #region Methods
     public override void Execute(object? args)
     {                        
         if (args is null)
@@ -43,4 +47,6 @@ public class Echo : ShellCommand
 
     }
     
+    #endregion
+
 }

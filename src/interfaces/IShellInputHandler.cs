@@ -9,8 +9,6 @@ public interface IShellInputHandler
 
     public IParser Parser { get; }
 
-    public IDictionary<string, IInputMap> InputMap { get; }
-
     #endregion
 
     #region Methods

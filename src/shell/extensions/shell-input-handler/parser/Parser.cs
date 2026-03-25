@@ -1,5 +1,4 @@
 using Interfaces;
-using Shell.Extensions.ShellInputHandler.Lexer.Tokens;
 using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 namespace Shell.Extensions.ShellInputHandler.Parser;
@@ -27,7 +26,9 @@ public class Parser : IParser
 
             }
 
-            ast.Root = ParseCommand(tokens);    
+            Queue<IShellToken> shellTokens = new(tokens.Cast<IShellToken>());
+
+            ast.Root = ParseCommand(shellTokens);    
 
             return ast;
            
@@ -40,26 +41,31 @@ public class Parser : IParser
 
     }
 
-    private ITreeNode ParseCommand(Queue<IToken> tokens)
+    private ITreeNode ParseCommand(Queue<IShellToken> tokens)
     {
-        CommandNode node = new CommandNode(tokens.Dequeue());
+        CommandNode node = new(tokens.Dequeue());
 
         while (tokens.Count > 0)
         {
-            switch (tokens.Peek())
+            switch (tokens.Peek().Type)
             {
-                case WordToken:
+                case TokenType.Word:
                     node.Children.Add(new ArgumentNode(tokens.Dequeue(), node));
 
                     break;
 
-                case RedirectStdOutToken or RedirectStdErrToken:
+                case TokenType.RedirectStdOut or TokenType.RedirectStdErr:
                     node.Children.Add(new RedirectorNode(tokens.Dequeue(), tokens.Dequeue(), FileMode.Create, node));
 
                     break;
 
-                case AppendStdOutToken or AppendStdErrToken:
+                case TokenType.AppendStdOut or TokenType.AppendStdErr:
                     node.Children.Add(new RedirectorNode(tokens.Dequeue(), tokens.Dequeue(), FileMode.Append, node));
+
+                    break;
+
+                default:
+                    tokens.Dequeue();
 
                     break;
             

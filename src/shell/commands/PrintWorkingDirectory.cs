@@ -4,8 +4,12 @@ namespace Shell.Commands;
 
 public class PrintWorkingDirectory : ShellCommand
 {
+    #region Constructor(s)
     public PrintWorkingDirectory(IShell shell) : base(shell) {}
     
+    #endregion
+
+    #region Methods
     public override void Execute(object? args = null)
     {
         StandardOutput += Directory.GetCurrentDirectory();
@@ -19,5 +23,7 @@ public class PrintWorkingDirectory : ShellCommand
         Console.WriteLine(StandardOutput);
 
     }
+
+    #endregion
 
 }

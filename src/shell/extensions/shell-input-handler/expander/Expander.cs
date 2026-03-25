@@ -7,34 +7,25 @@ public class Expander : IExpander
     #region Constructor(s)
     public Expander()
     {
-        GroupDelimiters = [];
-        EscapeCharacters = [];
+        ExpansionMap = new Dictionary<string, Func<string, string>>();
         
     }
 
     #endregion
 
     #region Properties
-    public IList<char> GroupDelimiters { get; private set; }
-
-    public IList<char> EscapeCharacters { get; private set; }
+    public IDictionary<string, Func<string, string>> ExpansionMap { get; }
 
     #endregion
 
     #region Methods
     public Queue<IToken> Expand(Queue<IToken> tokens)
     {
-        if (tokens.Count <= 0 )
-        {
-            return tokens;
-
-        }
-
         foreach (IToken token in tokens)
         {
             token.ExpandedValue = token.RawValue;
 
-            token.ExpandedValue = RemoveQuotes(token.ExpandedValue);
+            token.ExpandedValue = ExpandValue(token.ExpandedValue);
 
         }
         
@@ -42,39 +33,21 @@ public class Expander : IExpander
 
     }
 
-    private string RemoveQuotes(string input)
+    private string ExpandValue(string input)
     {
         string result = input;
 
-        foreach (char chr in result)
-        {
-            if (EscapeCharacters.Contains(chr))
-            {
-                result.Remove(result.IndexOf(chr), 1);
+        IEnumerable<string> keys = ExpansionMap.Keys.ToList();
 
-                continue;
+        foreach (string key in ExpansionMap.Keys)
+        {
+            if (result.Contains(key))
+            {
+                result = ExpansionMap[key](result);
 
             }
-
-            if (GroupDelimiters.Contains(chr))
-            {
-                
-            }
-
+            
         }
-
-        int delimiterIndex = result.IndexOfAny(GroupDelimiters.ToArray());
-
-        if (delimiterIndex == -1)
-        {
-            return result;
-
-        }
-
-        char delimiter = result[delimiterIndex];
-
-        result = result.Replace(delimiter.ToString(), string.Empty);
-
 
         return result;
         

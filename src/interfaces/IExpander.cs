@@ -3,9 +3,7 @@ namespace Interfaces;
 public interface IExpander
 {
     #region Properties
-    public IList<char> GroupDelimiters { get; }
-
-    public IList<char> EscapeCharacters { get; }
+    public IDictionary<string, Func<string, string>> ExpansionMap { get; }
 
     #endregion
 

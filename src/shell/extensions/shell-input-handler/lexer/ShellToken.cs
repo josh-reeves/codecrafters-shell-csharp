@@ -1,13 +1,14 @@
 using Interfaces;
 
-namespace Shell.Extensions.ShellInputHandler.Lexer.Tokens;
+namespace Shell.Extensions.ShellInputHandler.Lexer;
 
-public abstract class ShellToken : IToken
+public class ShellToken : IShellToken
 {
-    public ShellToken()
+    public ShellToken(TokenType type)
     {
         RawValue = string.Empty;
         ExpandedValue = string.Empty;
+        Type = type;
 
     }
 
@@ -16,5 +17,7 @@ public abstract class ShellToken : IToken
     public string RawValue { get; set; }
 
     public string ExpandedValue { get; set; }
+
+    public TokenType Type { get; }
 
 }
