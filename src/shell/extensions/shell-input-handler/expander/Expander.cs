@@ -43,7 +43,7 @@ public class Expander : IExpander
 
             if (ExpansionMap.ContainsKey(currentChar))
             {
-                (string original, string expansion) = ExpansionMap[currentChar](input);
+                (string original, string expansion) = ExpansionMap[currentChar](input[i..input.Length]);
 
                 result += expansion;
 
