@@ -284,3 +284,29 @@ public class LexerSeparatorState : LexerState
     #endregion
 
 }
+
+public class LexerEscapeState : LexerState
+{
+    #region Constructor(s)
+    public LexerEscapeState() {}
+
+    #endregion
+
+    #region Methods
+    public override void Execute()
+    {
+        if (Controller is not ILexerStateController controller)
+        {
+            return;
+
+        }
+
+        controller.ConsumeInput(2);
+
+        controller.Transition(controller.DefaultState);
+
+    }
+
+    #endregion
+
+}

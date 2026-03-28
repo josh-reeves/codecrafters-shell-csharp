@@ -11,40 +11,51 @@ class Program
 {
     static void Main()
     {
-        char commandSeparator = ' ';
+        const char separator = ' ',
+                   escape = '\\',
+                   homeDir = '~',
+                   doubleQuote = '"',
+                   singleQuote = '\'';
  
         IState defaultState = new LexerDefaultState();
+        ILexerStateController stateController = new LexerStateController(
+            defaultState, 
+            new Dictionary<IState, Func<IToken>> 
+            {
+                { defaultState, () => new ShellToken(TokenType.Word) }
+                
+            });
         
-        ShellInputHandler inputHandler = new ShellInputHandler(
-            new Lexer(
-                new LexerStateController(
-                        defaultState, 
-                        new Dictionary<IState, Func<IToken>> 
-                        {
-                            { defaultState, () => new ShellToken(TokenType.Word) }
-                            
-                        })),
+        IShellInputHandler inputHandler = new ShellInputHandler(
+            new Lexer(stateController),
             new Expander(),
             new Parser(),
             new Dictionary<string, IInputMap>
             {
-                { commandSeparator.ToString(), new ShellInputHandler.InputMap(new LexerSeparatorState()) },
-                { "\'", new ShellInputHandler.InputMap(new LexerGroupDelimiterState('\''), () => new ShellToken(TokenType.Word), (str) => str.Replace("\'", string.Empty)) },
-                { "\"", new ShellInputHandler.InputMap(new LexerGroupDelimiterState('"'), () => new ShellToken(TokenType.Word), (str) => str.Replace("\"", string.Empty)) },
+                { separator.ToString(), new ShellInputHandler.InputMap(new LexerSeparatorState()) },
+                { escape.ToString(), new ShellInputHandler.InputMap(new LexerEscapeState(), () => new ShellToken(TokenType.Word), ExpandEscape) },
+                { singleQuote.ToString(), new ShellInputHandler.InputMap(new LexerGroupDelimiterState(singleQuote), () => new ShellToken(TokenType.Word), input => (input[0..1], string.Empty)) },
+                { doubleQuote.ToString(), new ShellInputHandler.InputMap(new LexerGroupDelimiterState(doubleQuote), () => new ShellToken(TokenType.Word), input => (input[0..1], string.Empty)) },
                 { ">", new ShellInputHandler.InputMap(new LexerOperatorState(">"), () => new ShellToken(TokenType.RedirectStdOut)) },
                 { "1>", new ShellInputHandler.InputMap(new LexerOperatorState("1>"), () => new ShellToken(TokenType.RedirectStdOut)) },
                 { "2>", new ShellInputHandler.InputMap(new LexerOperatorState("2>"), () => new ShellToken(TokenType.RedirectStdErr)) },
                 { ">>", new ShellInputHandler.InputMap(new LexerOperatorState(">>"), () => new ShellToken(TokenType.AppendStdOut)) },
                 { "1>>", new ShellInputHandler.InputMap(new LexerOperatorState("1>>"), () => new ShellToken(TokenType.AppendStdOut)) },
                 { "2>>", new ShellInputHandler.InputMap(new LexerOperatorState("2>>"), () => new ShellToken(TokenType.AppendStdErr)) },
-                { "\\", new ShellInputHandler.InputMap(null, null, (str) => str.Remove(str.IndexOf('\\'), 1)) }
             
             });
 
-        Shell shell = new("$ ", "PATH", commandSeparator, '~', inputHandler);
+        Shell shell = new("$ ", "PATH", separator, homeDir, inputHandler);
 
         shell.Run();
+
+        (string original, string expansion) ExpandEscape(string input)
+        {
+            int index = input.IndexOf(escape);
+
+            return (input[index..(index + 2)], input[index + 1].ToString());
+
+        }
         
     }
-
 }

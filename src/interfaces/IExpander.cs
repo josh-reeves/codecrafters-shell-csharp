@@ -3,7 +3,7 @@ namespace Interfaces;
 public interface IExpander
 {
     #region Properties
-    public IDictionary<string, Func<string, string>> ExpansionMap { get; }
+    public IDictionary<char, Func<string, (string original, string expansion)>> ExpansionMap { get; }
 
     #endregion
 

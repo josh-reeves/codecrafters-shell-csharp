@@ -7,7 +7,7 @@ public interface IInputMap
 
     public Func<IToken>? Token { get; }
 
-    public Func<string, string>? ExpansionMethod { get; }
+    public Func<string, (string, string)>? ExpansionMethod { get; }
 
     #endregion
 

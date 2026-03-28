@@ -4,7 +4,7 @@ namespace Shell.Extensions.ShellInputHandler;
 
 public class ShellInputHandler : IShellInputHandler
 {
-    public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser, IDictionary<string, IInputMap> inputMap)
+    public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser, IDictionary<string, IInputMap>? inputMap = null)
     {
         Lexer = lexer;
         Expander = expander;
@@ -14,7 +14,7 @@ public class ShellInputHandler : IShellInputHandler
         {
             if (inputMap?[key].ExpansionMethod != null)
             {
-                Expander.ExpansionMap.Add(key, inputMap[key].ExpansionMethod!);
+                Expander.ExpansionMap.Add(key[0], inputMap[key].ExpansionMethod!);
 
             }
 
@@ -55,7 +55,7 @@ public class ShellInputHandler : IShellInputHandler
     #region Structs
     public struct InputMap : IInputMap
     {
-        public InputMap(IState? state = null, Func<IToken>? token = null, Func<string, string>? expansionMethod = null)
+        public InputMap(IState? state = null, Func<IToken>? token = null, Func<string, (string, string)>? expansionMethod = null)
         {
             State = state;
             Token = token;
@@ -67,7 +67,7 @@ public class ShellInputHandler : IShellInputHandler
 
         public Func<IToken>? Token { get; set; }
 
-        public Func<string, string>? ExpansionMethod { get; set; }
+        public Func<string, (string, string)>? ExpansionMethod { get; set; }
         
     }
 

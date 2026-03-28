@@ -7,14 +7,14 @@ public class Expander : IExpander
     #region Constructor(s)
     public Expander()
     {
-        ExpansionMap = new Dictionary<string, Func<string, string>>();
+        ExpansionMap = new Dictionary<char, Func<string, (string, string)>>();
         
     }
 
     #endregion
 
     #region Properties
-    public IDictionary<string, Func<string, string>> ExpansionMap { get; }
+    public IDictionary<char, Func<string, (string original, string expansion)>> ExpansionMap { get; }
 
     #endregion
 
@@ -35,18 +35,25 @@ public class Expander : IExpander
 
     private string ExpandValue(string input)
     {
-        string result = input;
+        string result = string.Empty;
 
-        IEnumerable<string> keys = ExpansionMap.Keys.ToList();
-
-        foreach (string key in ExpansionMap.Keys)
+        for (int i = 0; i < input.Length; i++)
         {
-            if (result.Contains(key))
-            {
-                result = ExpansionMap[key](result);
+            char currentChar = input[i];
 
-            }
+            if (ExpansionMap.ContainsKey(currentChar))
+            {
+                (string original, string expansion) = ExpansionMap[currentChar](input);
+
+                result += expansion;
+
+                i += original.Length - 1;
+
+                continue;
             
+            }
+
+            result += currentChar;            
         }
 
         return result;
