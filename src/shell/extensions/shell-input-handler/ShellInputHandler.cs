@@ -4,12 +4,45 @@ namespace Shell.Extensions.ShellInputHandler;
 
 public class ShellInputHandler : IShellInputHandler
 {
+    #region Constructor(s)
     public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser, IDictionary<string, IInputMap>? inputMap = null)
     {
         Lexer = lexer;
         Expander = expander;
         Parser = parser;
 
+        if (inputMap != null)
+        {
+            RegisterInput(inputMap);
+
+        }
+    
+    }
+
+    #endregion
+
+    #region Properites
+    public ILexer Lexer { get; set; }
+
+    public IExpander Expander { get; set; }
+
+    public IParser Parser { get; set;}
+
+    #endregion
+
+    #region Methods
+    public ITree HandleInput(string input)
+    {        
+        Queue<IToken> tokenizedInput = Lexer?.Tokenize(input) ?? [];
+
+        tokenizedInput = Expander?.Expand(tokenizedInput) ?? tokenizedInput;
+
+        return Parser.Parse(tokenizedInput);
+
+    }
+
+    public void RegisterInput (IDictionary<string, IInputMap> inputMap)
+    {
         foreach (string key in inputMap?.Keys ?? [])
         {
             if (inputMap?[key].ExpansionMethod != null)
@@ -36,21 +69,7 @@ public class ShellInputHandler : IShellInputHandler
         
     }
 
-    public ILexer Lexer { get; set; }
-
-    public IExpander Expander { get; set; }
-
-    public IParser Parser { get; set;}
-
-    public ITree HandleInput(string input)
-    {        
-        Queue<IToken> tokenizedInput = Lexer?.Tokenize(input) ?? [];
-
-        tokenizedInput = Expander?.Expand(tokenizedInput) ?? tokenizedInput;
-
-        return Parser.Parse(tokenizedInput);
-
-    }
+    #endregion
 
     #region Structs
     public struct InputMap : IInputMap

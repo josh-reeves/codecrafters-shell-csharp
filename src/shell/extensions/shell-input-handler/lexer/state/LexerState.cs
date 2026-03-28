@@ -115,14 +115,16 @@ public class LexerDefaultState : LexerState
 public class LexerGroupDelimiterState : LexerState
 {
     #region Fields
+    private char? escape;
     private char terminator;
 
     #endregion
 
     #region Constructor(s)
-    public LexerGroupDelimiterState(char terminatorChar)
+    public LexerGroupDelimiterState(char terminatorChar, char? escapeChar = null)
     {
         terminator = terminatorChar;
+        escape = escapeChar;
 
     }
 
@@ -145,6 +147,12 @@ public class LexerGroupDelimiterState : LexerState
 
             return;
         
+        }
+
+        if (escape is not null && controller.RemainingText[0] == escape)
+        {
+            controller.Transition(new LexerEscapeState(this));
+            
         }
 
         if (controller.RemainingText[0] == terminator)
@@ -287,8 +295,13 @@ public class LexerSeparatorState : LexerState
 
 public class LexerEscapeState : LexerState
 {
+    #region Fields
+    private IState? previous;
+    #endregion
+
     #region Constructor(s)
-    public LexerEscapeState() {}
+    public LexerEscapeState(IState? previousState = null) =>
+        previous = previousState;
 
     #endregion
 
@@ -303,7 +316,7 @@ public class LexerEscapeState : LexerState
 
         controller.ConsumeInput(2);
 
-        controller.Transition(controller.DefaultState);
+        controller.Transition(previous ?? controller.DefaultState);
 
     }
 

@@ -25,7 +25,7 @@ public class Expander : IExpander
         {
             token.ExpandedValue = token.RawValue;
 
-            token.ExpandedValue = ExpandValue(token.ExpandedValue);
+            token.ExpandedValue = ExpandValue(token.RawValue);
 
         }
         
