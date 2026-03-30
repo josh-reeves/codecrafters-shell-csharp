@@ -9,12 +9,12 @@ namespace Shell;
 
 class Program
 {
+    const char escape = '\\',
+            doubleQuote = '"',
+            singleQuote = '\'';
+
     static void Main()
     {
-        const char escape = '\\',
-                   doubleQuote = '"',
-                   singleQuote = '\'';
- 
         IState defaultState = new LexerDefaultState();
         ILexerStateController stateController = new LexerStateController(
             defaultState, 
@@ -47,31 +47,49 @@ class Program
 
         shell.Run();
 
-        // Expansion Methods --------------------------------------------------
-        (string original, string expansion) ExpandEscape(string input)
-        {
-            return (input[0..2], input[1].ToString());
+    }
 
-        }
-
-        (string original, string expansion) ExpandSingleQuote(string input)
-        {
-            char quoteChar = input[0];          
-            int end = input.IndexOf(quoteChar, 1) >= 1 ? input.IndexOf(quoteChar, 1) : input.Length;
-
-            return (input[0..end], input[1..end]);
-
-        }
-
-        (string original, string expansion) ExpandDoubleQuote(string input)
-        {
-            char quoteChar = input[0];          
-            int end = input.IndexOfAny([quoteChar, escape], 1) >= 1 ? input.IndexOfAny([quoteChar, escape], 1) : input.Length;
-
-            return (input[0..end], input[1..end]);
-
-        }
+    static (string original, string expansion) ExpandEscape(string input)
+    {
+        return (input[0..2], input[1].ToString());
 
     }
-    
+
+    static (string original, string expansion) ExpandSingleQuote(string input)
+    {
+        char quoteChar = input[0];          
+        int end = input.IndexOf(quoteChar, 1) >= 1 ? input.IndexOf(quoteChar, 1) : input.Length;
+        string original = input[0..(end < input.Length ? end + 1 : end)],
+               expansion = input[1..end];
+
+        return (original, expansion);
+
+    }
+
+    static (string original, string expansion) ExpandDoubleQuote(string input)
+    {
+        char quoteChar = input[0];          
+        int end = 1;
+
+        while (end < input.Length && input[end] != quoteChar) 
+        {
+            end = input.IndexOfAny([quoteChar, escape], end) >= 1 ? input.IndexOfAny([quoteChar, escape], end) : input.Length;
+
+            if (input[end >= input.Length ? end - 1 : end] == escape)
+            {
+                input = input.Remove(end, 1);
+
+                end++;
+
+            };
+
+        }
+
+        string original = input[0..(end < input.Length ? end + 1 : end)],
+               expansion = input[1..end];
+
+        return (original, expansion);
+
+    }
+
 }
