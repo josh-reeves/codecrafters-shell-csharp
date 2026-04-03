@@ -60,8 +60,6 @@ public class ExpansionMethods
         original = input[0..(index + offset < input.Length ? index + offset + 1 : index + offset)];
         expansion = expansion[1..index];
 
-        Console.WriteLine($"Original: {original}, Expansion: {expansion}");
-
         return (original, expansion);
 
     } 
