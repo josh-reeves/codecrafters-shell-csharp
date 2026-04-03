@@ -2,6 +2,7 @@ namespace Interfaces;
 
 public interface IShellCommand
 {
+    #region Properties
     public bool IsStdOutRedirected { get; set; }
 
     public bool IsStdErrRedirected { get; set; }
@@ -10,6 +11,11 @@ public interface IShellCommand
 
     public string StandardError { get; }
 
+    #endregion
+
+    #region Methods
     public void Execute(object? args);
+
+    #endregion
 
 }

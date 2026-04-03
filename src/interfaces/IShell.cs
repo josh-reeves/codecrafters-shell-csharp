@@ -4,6 +4,7 @@ namespace Interfaces;
 
 public interface IShell
 {
+    #region Properties
     public bool ShellIsActive { get; set; }
 
     public char CommandSeparator { get; }
@@ -22,10 +23,15 @@ public interface IShell
 
     public IDictionary<string, IShellCommand> Builtins { get; }
 
+    #endregion
+
+    #region Methods
     public void Run();
 
     public bool IsExecutable(string[] files);
 
     public IEnumerable<string> Search(string file, IEnumerable<string> directories);
+
+    #endregion
 
 }

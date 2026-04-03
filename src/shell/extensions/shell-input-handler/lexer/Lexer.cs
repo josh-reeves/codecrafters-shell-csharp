@@ -4,6 +4,7 @@ namespace Shell.Extensions.ShellInputHandler.Lexer;
 
 public class Lexer : ILexer
 {
+    #region Constructor(s)
     public Lexer(ILexerStateController controller)
     {
         RawInput = string.Empty;
@@ -11,12 +12,18 @@ public class Lexer : ILexer
         
     }
 
+    #endregion
+
+    #region Properties
     public string RawInput { get; private set; }
 
     public ILexerStateController Controller { get; }
 
     public Queue<IToken> TokenizedInput { get => Controller.TokenizedInput; }
 
+    #endregion
+
+    #region Methods
     public Queue<IToken> Tokenize(string input)
     {
         TokenizedInput.Clear();
@@ -32,5 +39,7 @@ public class Lexer : ILexer
         return TokenizedInput;
 
     }
+    
+    #endregion
 
 }

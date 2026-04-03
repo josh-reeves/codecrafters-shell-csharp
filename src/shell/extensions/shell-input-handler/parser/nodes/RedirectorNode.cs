@@ -15,6 +15,9 @@ public class RedirectorNode : ITreeNode
         
     }
 
+    #endregion
+
+    #region Properties
     public IShellToken Data;
 
     public IShellToken FileToken { get; }

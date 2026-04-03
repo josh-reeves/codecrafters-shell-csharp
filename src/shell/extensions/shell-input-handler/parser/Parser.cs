@@ -6,11 +6,8 @@ namespace Shell.Extensions.ShellInputHandler.Parser;
 public class Parser : IParser
 {
     #region Constructor(s)
-    public Parser()
-    {
-
-    }
-
+    public Parser() {}
+    
     #endregion
 
     #region Methods

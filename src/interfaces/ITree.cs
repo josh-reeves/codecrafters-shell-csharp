@@ -7,8 +7,4 @@ public interface ITree
 
     #endregion
 
-    #region Methods
-    
-    #endregion
-
 }

@@ -4,6 +4,7 @@ namespace Shell.Extensions.ShellInputHandler.Lexer;
 
 public class ShellToken : IShellToken
 {
+    #region Constructor(s)
     public ShellToken(TokenType type)
     {
         RawValue = string.Empty;
@@ -12,6 +13,9 @@ public class ShellToken : IShellToken
 
     }
 
+    #endregion
+
+    #region Properties
     public int Position { get; set; }
 
     public string RawValue { get; set; }
@@ -19,5 +23,7 @@ public class ShellToken : IShellToken
     public string ExpandedValue { get; set; }
 
     public TokenType Type { get; }
+
+    #endregion
 
 }

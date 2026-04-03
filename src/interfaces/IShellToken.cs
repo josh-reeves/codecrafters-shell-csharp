@@ -13,6 +13,9 @@ public enum TokenType
 
 public interface IShellToken : IToken
 {
+    #region Properties
     public TokenType Type { get; }
+
+    #endregion
 
 }

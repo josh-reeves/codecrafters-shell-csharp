@@ -4,6 +4,7 @@ namespace Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 public class CommandNode : ITreeNode
 {
+    #region Constructor(s)
     public CommandNode(IShellToken data, ITreeNode? parent = null)
     {
         Data = data;
@@ -12,10 +13,15 @@ public class CommandNode : ITreeNode
         
     }
 
+    #endregion
+
+    #region Properties
     public IShellToken Data { get; } 
 
     public ITreeNode? Parent { get; set; }
 
     public IList<ITreeNode> Children { get; }
+
+    #endregion
 
 }

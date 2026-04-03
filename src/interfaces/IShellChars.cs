@@ -2,6 +2,7 @@ namespace Interfaces;
 
 public interface IShellChars
 {
+    #region Properties
     public char CommandSeparator { get; }
 
     public char HomeChar { get; }
@@ -17,5 +18,7 @@ public interface IShellChars
     public char RedirectChar { get; }
 
     public string AppendSeq { get; }
+
+    #endregion
 
 }
