@@ -36,28 +36,35 @@ public class ExpansionMethods
 
     public (string original, string expansion) ExpandDoubleQuote(string input)
     {
-        int end = 1;
+        int index = 1;
 
-        while (end < input.Length && input[end] != chars.DoubleQuote) 
+        string original,
+               expansion = input;
+
+        while (index < expansion.Length && expansion[index] != chars.DoubleQuote) 
         {
-            end = input.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], end) >= 1 ? input.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], end) : input.Length;
+            index = expansion.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], index) >= 0 ? expansion.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], index) : expansion.Length;
 
-            if (input[end >= input.Length ? end - 1 : end] == chars.EscapeChar)
+            if (expansion[index >= expansion.Length ? index - 1 : index] == chars.EscapeChar)
             {
-                input = input.Remove(end, 1);
+                expansion = expansion.Remove(index, 1);
 
-                end++;
+                index++;
 
             };
 
         }
 
-        string original = input[0..(end < input.Length ? end + 1 : end)],
-               expansion = input[1..end];
+        int offset = input.Length - expansion.Length;
+
+        original = input[0..(index + offset < input.Length ? index + offset + 1 : index + offset)];
+        expansion = expansion[1..index];
+
+        Console.WriteLine($"Original: {original}, Expansion: {expansion}");
 
         return (original, expansion);
 
-    }
+    } 
 
     #endregion
 }
