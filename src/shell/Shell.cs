@@ -14,7 +14,7 @@ public class Shell : IShell
     #endregion
 
     #region Constructor(s)
-    public Shell(string promptSeq, string pathVar, char commandSeparator, char homeChar, IShellInputHandler shellInputHandler)
+    public Shell(string promptSeq, string pathVar, char commandSeparator, IShellInputHandler shellInputHandler)
     {
         prompt = promptSeq;
 
@@ -23,7 +23,6 @@ public class Shell : IShell
 
         PathVar = pathVar;
         CommandSeparator = commandSeparator;
-        HomeChar = homeChar;
         inputHandler = shellInputHandler;
 
         Builtins = new Dictionary<string, IShellCommand>()
@@ -45,8 +44,6 @@ public class Shell : IShell
 
     public char CommandSeparator { get; private set; }
     
-    public char HomeChar { get; private set; }
-
     public char PathSeparator { get => System.IO.Path.PathSeparator; } 
 
     public string PathVar { get; private set; }

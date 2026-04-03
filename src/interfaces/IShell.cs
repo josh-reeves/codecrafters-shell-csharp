@@ -7,10 +7,6 @@ public interface IShell
     public bool ShellIsActive { get; set; }
 
     public char CommandSeparator { get; }
-    
-    public char HomeChar { get;  }
-
-    public char PathSeparator { get; } 
 
     public string PathVar { get; }
 

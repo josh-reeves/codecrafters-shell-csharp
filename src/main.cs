@@ -9,39 +9,47 @@ namespace Shell;
 
 class Program
 {
-    const char escape = '\\',
-            doubleQuote = '"',
-            singleQuote = '\'';
-
     static void Main()
     {
-        IState defaultState = new LexerDefaultState();
-        ILexerStateController stateController = new LexerStateController(
+        ShellChars chars = new(
+            commandSeparator: ' ',
+            homeChar: '~',
+            pathSeparator: Path.PathSeparator,
+            escapeChar: '\\',
+            singleQuote: '\'',
+            doubleQuote: '"',
+            redirectChar: '>',
+            appendSeq: ">>"
+        
+        );
+        
+        ExpansionMethods expansionMethods = new(chars);
+        LexerDefaultState defaultState = new();
+        LexerStateController stateController = new(
             defaultState, 
             new Dictionary<IState, Func<IToken>> 
             {
                 { defaultState, () => new ShellToken(TokenType.Word) }
                 
             });
-        
-        ShellInputHandler inputHandler = new(new Lexer(stateController), new Expander(), new Parser());
 
-        Shell shell = new("$ ", "PATH", ' ', '~', inputHandler);
+        ShellInputHandler inputHandler = new(new Lexer(stateController), new Expander(), new Parser());
+        Shell shell = new("$ ", "PATH", chars.CommandSeparator, inputHandler);
 
         inputHandler.RegisterInput(
             new Dictionary<string, IInputMap>
             {
-                { shell.CommandSeparator.ToString(), new ShellInputHandler.InputMap(new LexerSeparatorState()) },
-                { shell.HomeChar.ToString(), new ShellInputHandler.InputMap(expansionMethod: (input) => (input[0].ToString(), shell.HomeDir)) },
-                { escape.ToString(), new ShellInputHandler.InputMap(new LexerEscapeState(), () => new ShellToken(TokenType.Word), ExpandEscape) },
-                { singleQuote.ToString(), new ShellInputHandler.InputMap(new LexerGroupDelimiterState(singleQuote), () => new ShellToken(TokenType.Word), ExpandSingleQuote) },
-                { doubleQuote.ToString(), new ShellInputHandler.InputMap(new LexerGroupDelimiterState(doubleQuote, escape), () => new ShellToken(TokenType.Word), ExpandDoubleQuote) },
-                { ">", new ShellInputHandler.InputMap(new LexerOperatorState(">"), () => new ShellToken(TokenType.RedirectStdOut)) },
-                { "1>", new ShellInputHandler.InputMap(new LexerOperatorState("1>"), () => new ShellToken(TokenType.RedirectStdOut)) },
-                { "2>", new ShellInputHandler.InputMap(new LexerOperatorState("2>"), () => new ShellToken(TokenType.RedirectStdErr)) },
-                { ">>", new ShellInputHandler.InputMap(new LexerOperatorState(">>"), () => new ShellToken(TokenType.AppendStdOut)) },
-                { "1>>", new ShellInputHandler.InputMap(new LexerOperatorState("1>>"), () => new ShellToken(TokenType.AppendStdOut)) },
-                { "2>>", new ShellInputHandler.InputMap(new LexerOperatorState("2>>"), () => new ShellToken(TokenType.AppendStdErr)) },
+                { chars.CommandSeparator.ToString(), new ShellInputHandler.InputMap(new LexerSeparatorState()) },
+                { chars.HomeChar.ToString(), new ShellInputHandler.InputMap(expansionMethod: (input) => (input[0].ToString(), shell.HomeDir)) },
+                { chars.EscapeChar.ToString(), new ShellInputHandler.InputMap(new LexerEscapeState(), () => new ShellToken(TokenType.Word), expansionMethods.ExpandEscape) },
+                { chars.SingleQuote.ToString(), new ShellInputHandler.InputMap(new LexerGroupDelimiterState(chars.SingleQuote), () => new ShellToken(TokenType.Word), expansionMethods.ExpandSingleQuote) },
+                { chars.DoubleQuote.ToString(), new ShellInputHandler.InputMap(new LexerGroupDelimiterState(chars.DoubleQuote, chars.EscapeChar), () => new ShellToken(TokenType.Word), expansionMethods.ExpandDoubleQuote) },
+                { chars.RedirectChar.ToString(), new ShellInputHandler.InputMap(new LexerOperatorState(chars.RedirectChar.ToString()), () => new ShellToken(TokenType.RedirectStdOut)) },
+                { "1" + chars.RedirectChar, new ShellInputHandler.InputMap(new LexerOperatorState("1" + chars.RedirectChar), () => new ShellToken(TokenType.RedirectStdOut)) },
+                { "2" + chars.RedirectChar, new ShellInputHandler.InputMap(new LexerOperatorState("2" + chars.RedirectChar), () => new ShellToken(TokenType.RedirectStdErr)) },
+                { chars.AppendSeq, new ShellInputHandler.InputMap(new LexerOperatorState(chars.AppendSeq), () => new ShellToken(TokenType.AppendStdOut)) },
+                { "1" + chars.AppendSeq, new ShellInputHandler.InputMap(new LexerOperatorState("1" + chars.AppendSeq), () => new ShellToken(TokenType.AppendStdOut)) },
+                { "2" + chars.AppendSeq, new ShellInputHandler.InputMap(new LexerOperatorState("2" + chars.AppendSeq), () => new ShellToken(TokenType.AppendStdErr)) },
             
             });
 
@@ -49,47 +57,37 @@ class Program
 
     }
 
-    static (string original, string expansion) ExpandEscape(string input)
+}
+
+public struct ShellChars : IShellChars
+{
+    public ShellChars(char commandSeparator, char homeChar, char pathSeparator, char escapeChar, char singleQuote, char doubleQuote, char redirectChar, string appendSeq)
     {
-        return (input[0..2], input[1].ToString());
+        CommandSeparator = commandSeparator;
+        HomeChar = homeChar;
+        PathSeparator = pathSeparator;
+        EscapeChar = escapeChar;
+        SingleQuote = singleQuote;
+        DoubleQuote = doubleQuote;
+        RedirectChar = redirectChar;
+        AppendSeq = appendSeq;
 
     }
 
-    static (string original, string expansion) ExpandSingleQuote(string input)
-    {
-        char quoteChar = input[0];          
-        int end = input.IndexOf(quoteChar, 1) >= 1 ? input.IndexOf(quoteChar, 1) : input.Length;
-        string original = input[0..(end < input.Length ? end + 1 : end)],
-               expansion = input[1..end];
+    public char CommandSeparator { get; }
 
-        return (original, expansion);
+    public char HomeChar { get; }
 
-    }
+    public char PathSeparator { get; }
 
-    static (string original, string expansion) ExpandDoubleQuote(string input)
-    {
-        char quoteChar = input[0];          
-        int end = 1;
+    public char EscapeChar { get; }
 
-        while (end < input.Length && input[end] != quoteChar) 
-        {
-            end = input.IndexOfAny([quoteChar, escape], end) >= 1 ? input.IndexOfAny([quoteChar, escape], end) : input.Length;
+    public char SingleQuote { get; }
 
-            if (input[end >= input.Length ? end - 1 : end] == escape)
-            {
-                input = input.Remove(end, 1);
+    public char DoubleQuote { get; }
 
-                end++;
+    public char RedirectChar { get; }
 
-            };
-
-        }
-
-        string original = input[0..(end < input.Length ? end + 1 : end)],
-               expansion = input[1..end];
-
-        return (original, expansion);
-
-    }
+    public string AppendSeq { get; }
 
 }

@@ -17,7 +17,7 @@ public class ChangeDirectory : ShellCommand
     #region Methods
     public override void Execute(object? args)
     {
-        string dir = (args as string[])?.Length > 0 ? ((string[])args)[0].Replace(Shell.HomeChar.ToString(), Shell.HomeDir) : string.Empty;
+        string dir = (args as string[])?.Length > 0 ? ((string[])args)[0] : string.Empty;
         
         if (string.IsNullOrEmpty(dir))
         {
