@@ -3,6 +3,8 @@ namespace Interfaces;
 public interface IInputMap
 {
     #region Properties
+    public string Sequence { get; }
+
     public IState? State { get; }
 
     public Func<IToken>? Token { get; }

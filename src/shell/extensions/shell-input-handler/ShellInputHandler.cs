@@ -2,35 +2,60 @@ using Interfaces;
 
 namespace Shell.Extensions.ShellInputHandler;
 
-public class ShellInputHandler : IShellInputHandler
+/// <summary>
+/// The ShellInputHandler class provides a unified interface for converting raw
+///  input into a format that can be executed by the shell. The class deletgates 
+///  acts as a coordinator for this process, delegating the implementation of
+///  each part of the process to a separate component.
+/// 
+/// To facilitate this, the class also provides methods and structures that 
+///  unify and simplify the process configuring the individual components.
+/// </summary>
+public class ShellInputHandler : IInputHandler
 {
     #region Constructor(s)
-    public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser, IDictionary<string, IInputMap>? inputMap = null)
+    public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser, IList<IInputMap>? inputMaps = null)
     {
         Lexer = lexer;
         Expander = expander;
-        Parser = parser;
+        Parser = parser; 
+        
+        RegisterInput(inputMaps ?? []);
 
-        if (inputMap != null)
-        {
-            RegisterInput(inputMap);
-
-        }
-    
     }
 
     #endregion
 
     #region Properites
+    /// <summary>
+    /// The Lexer convers raw input into a queue of tokens that can be easily
+    ///  interpreted regardless of any syntactic idiosyncrasies in the input.
+    /// </summary>
     public ILexer Lexer { get; set; }
 
+    /// <summary>
+    /// The Expander handles any special characters or sequences in the raw
+    ///  input. Removing, replacing or otherwise modifying them as defined
+    ///  by the component.
+    /// </summary>
     public IExpander Expander { get; set; }
 
+    /// <summary>
+    /// The parser converts the tokenized and expanded input into a syntax tree
+    ///  that can be traversed and executed by the shell.
+    /// </summary>
     public IParser Parser { get; set;}
 
     #endregion
 
     #region Methods
+    /// <summary>
+    /// Receives input and converts it into a syntax tree that can be executed
+    ///  by the shell by lexing, expanding and parsing the input into a syntax
+    ///  tree.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns>A syntax tree representing the provided input.</returns>
     public ITree HandleInput(string input)
     {        
         Queue<IToken> tokenizedInput = Lexer?.Tokenize(input) ?? [];
@@ -41,25 +66,32 @@ public class ShellInputHandler : IShellInputHandler
 
     }
 
-    public void RegisterInput (IDictionary<string, IInputMap> inputMap)
+    /// <summary>
+    /// Provides a method for simultaneously registering an input sequence with
+    ///  the appropriate components of the input handling process.
+    /// <param name="inputMaps">
+    /// A list of input maps containing the character sequences and handling 
+    ///  information to add to the input handler.
+    /// </param>
+    public void RegisterInput (IList<IInputMap> inputMaps)
     {
-        foreach (string key in inputMap?.Keys ?? [])
+        foreach (IInputMap inputMap in inputMaps)
         {
-            if (inputMap?[key].ExpansionMethod != null)
+            if (inputMap.ExpansionMethod != null)
             {
-                Expander.ExpansionMap.Add(key[0], inputMap[key].ExpansionMethod!);
+                Expander.ExpansionMap.Add(inputMap.Sequence[0], inputMap.ExpansionMethod);
 
             }
 
-            if (inputMap?[key].State is not IState state)
+            if (inputMap.State is not IState state)
             {
                 continue;
 
             }
 
-            Lexer.Controller.StateMap.Add(key, state);
+            Lexer.Controller.StateMap.Add(inputMap.Sequence, state);
 
-            if (inputMap?[key].Token is Func<IToken> token)
+            if (inputMap.Token is Func<IToken> token)
             {
                 Lexer.Controller.TokenMap.Add(state, token);
 
@@ -72,21 +104,34 @@ public class ShellInputHandler : IShellInputHandler
     #endregion
 
     #region Structs
+    /// <summary>
+    /// Provides a unified container for items needed to configure the
+    ///  individual components used in the input handling process.
+    /// </summary>
     public struct InputMap : IInputMap
     {
-        public InputMap(IState? state = null, Func<IToken>? token = null, Func<string, (string, string)>? expansionMethod = null)
+        #region Constructor(s)
+        public InputMap(string sequence, IState? state = null, Func<IToken>? token = null, Func<string, (string, string)>? expansionMethod = null)
         {
+            Sequence = sequence;
             State = state;
             Token = token;
             ExpansionMethod = expansionMethod;
             
         }
 
-        public IState? State { get; set; }
+        #endregion
 
-        public Func<IToken>? Token { get; set; }
+        #region Properties
+        public string Sequence { get; } 
 
-        public Func<string, (string, string)>? ExpansionMethod { get; set; }
+        public IState? State { get; }
+
+        public Func<IToken>? Token { get; }
+
+        public Func<string, (string, string)>? ExpansionMethod { get; }
+
+        #endregion
         
     }
 

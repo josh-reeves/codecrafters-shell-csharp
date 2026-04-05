@@ -1,6 +1,6 @@
 namespace Interfaces;
 
-public interface IShellInputHandler
+public interface IInputHandler
 {
     #region Properties
     public ILexer Lexer { get; }

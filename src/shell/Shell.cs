@@ -9,12 +9,12 @@ public class Shell : IShell
     #region Fields
     private string prompt;
 
-    private IShellInputHandler inputHandler;
+    private IInputHandler inputHandler;
     
     #endregion
 
     #region Constructor(s)
-    public Shell(string promptSeq, string pathVar, char commandSeparator, IShellInputHandler shellInputHandler)
+    public Shell(string promptSeq, string pathVar, char commandSeparator, IInputHandler shellInputHandler)
     {
         prompt = promptSeq;
 

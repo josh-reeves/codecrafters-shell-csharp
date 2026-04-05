@@ -37,21 +37,20 @@ class Program
         Shell shell = new("$ ", "PATH", chars.CommandSeparator, inputHandler);
 
         inputHandler.RegisterInput(
-            new Dictionary<string, IInputMap>
-            {
-                { chars.CommandSeparator.ToString(), new ShellInputHandler.InputMap(new LexerSeparatorState()) },
-                { chars.HomeChar.ToString(), new ShellInputHandler.InputMap(expansionMethod: (input) => (input[0].ToString(), shell.HomeDir)) },
-                { chars.EscapeChar.ToString(), new ShellInputHandler.InputMap(new LexerEscapeState(), () => new ShellToken(TokenType.Word), expansionMethods.ExpandEscape) },
-                { chars.SingleQuote.ToString(), new ShellInputHandler.InputMap(new LexerGroupDelimiterState(chars.SingleQuote), () => new ShellToken(TokenType.Word), expansionMethods.ExpandSingleQuote) },
-                { chars.DoubleQuote.ToString(), new ShellInputHandler.InputMap(new LexerGroupDelimiterState(chars.DoubleQuote, chars.EscapeChar), () => new ShellToken(TokenType.Word), expansionMethods.ExpandDoubleQuote) },
-                { chars.RedirectChar.ToString(), new ShellInputHandler.InputMap(new LexerOperatorState(chars.RedirectChar.ToString()), () => new ShellToken(TokenType.RedirectStdOut)) },
-                { "1" + chars.RedirectChar, new ShellInputHandler.InputMap(new LexerOperatorState("1" + chars.RedirectChar), () => new ShellToken(TokenType.RedirectStdOut)) },
-                { "2" + chars.RedirectChar, new ShellInputHandler.InputMap(new LexerOperatorState("2" + chars.RedirectChar), () => new ShellToken(TokenType.RedirectStdErr)) },
-                { chars.AppendSeq, new ShellInputHandler.InputMap(new LexerOperatorState(chars.AppendSeq), () => new ShellToken(TokenType.AppendStdOut)) },
-                { "1" + chars.AppendSeq, new ShellInputHandler.InputMap(new LexerOperatorState("1" + chars.AppendSeq), () => new ShellToken(TokenType.AppendStdOut)) },
-                { "2" + chars.AppendSeq, new ShellInputHandler.InputMap(new LexerOperatorState("2" + chars.AppendSeq), () => new ShellToken(TokenType.AppendStdErr)) },
+            [
+                new ShellInputHandler.InputMap(chars.CommandSeparator.ToString(), new LexerSeparatorState()),
+                new ShellInputHandler.InputMap(chars.HomeChar.ToString(), expansionMethod: (input) => (input[0].ToString(), shell.HomeDir)),
+                new ShellInputHandler.InputMap(chars.EscapeChar.ToString(), new LexerEscapeState(), () => new ShellToken(TokenType.Word), expansionMethods.ExpandEscape),
+                new ShellInputHandler.InputMap(chars.SingleQuote.ToString(), new LexerGroupDelimiterState(chars.SingleQuote), () => new ShellToken(TokenType.Word), expansionMethods.ExpandSingleQuote),
+                new ShellInputHandler.InputMap(chars.DoubleQuote.ToString(), new LexerGroupDelimiterState(chars.DoubleQuote, chars.EscapeChar), () => new ShellToken(TokenType.Word), expansionMethods.ExpandDoubleQuote),
+                new ShellInputHandler.InputMap(chars.RedirectChar.ToString(), new LexerOperatorState(chars.RedirectChar.ToString()), () => new ShellToken(TokenType.RedirectStdOut)),
+                new ShellInputHandler.InputMap("1" + chars.RedirectChar, new LexerOperatorState("1" + chars.RedirectChar), () => new ShellToken(TokenType.RedirectStdOut)),
+                new ShellInputHandler.InputMap("2" + chars.RedirectChar, new LexerOperatorState("2" + chars.RedirectChar), () => new ShellToken(TokenType.RedirectStdErr)),
+                new ShellInputHandler.InputMap(chars.AppendSeq, new LexerOperatorState(chars.AppendSeq), () => new ShellToken(TokenType.AppendStdOut)),
+                new ShellInputHandler.InputMap("1" + chars.AppendSeq, new LexerOperatorState("1" + chars.AppendSeq), () => new ShellToken(TokenType.AppendStdOut)),
+                new ShellInputHandler.InputMap("2" + chars.AppendSeq, new LexerOperatorState("2" + chars.AppendSeq), () => new ShellToken(TokenType.AppendStdErr)),
             
-            });
+            ]);
 
         shell.Run();
 
