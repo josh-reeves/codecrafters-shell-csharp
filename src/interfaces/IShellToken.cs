@@ -7,7 +7,8 @@ public enum TokenType
     RedirectStdErr,
     AppendStdOut,
     AppendStdErr,
-    Filename
+    Filename,
+    Pipe
 
 }
 

@@ -5,7 +5,16 @@ public interface ITreeNode
     #region Properties
     public ITreeNode? Parent { get; set; }
 
-    public IList<ITreeNode> Children { get; }
+    public ITreeNode? LeftChild { get; set; }
+
+    public ITreeNode? RightChild { get; set; }
+
+    #endregion
+    
+    #region Methods
+    public ITreeNode GetLastChild();
+
+    public void RemoveChild(ITreeNode child);
 
     #endregion
 

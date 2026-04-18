@@ -17,6 +17,8 @@ public interface IShellChars
 
     public char RedirectChar { get; }
 
+    public char PipeChar { get; }
+
     public string AppendSeq { get; }
 
     #endregion

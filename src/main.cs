@@ -19,6 +19,7 @@ class Program
             singleQuote: '\'',
             doubleQuote: '"',
             redirectChar: '>',
+            pipeChar: '|',
             appendSeq: ">>"
         
         );
@@ -33,7 +34,7 @@ class Program
                 
             });
 
-        ShellInputHandler inputHandler = new(new Lexer(stateController), new Expander(), new Parser());
+        ShellInputHandler inputHandler = new(new Lexer(stateController), new Expander(), new Parser(ParsingMethods.Parse));
         Shell shell = new("$ ", "PATH", chars.CommandSeparator, inputHandler);
 
         inputHandler.RegisterInput(
@@ -46,11 +47,15 @@ class Program
                 new ShellInputHandler.InputMap(chars.RedirectChar.ToString(), new LexerOperatorState(chars.RedirectChar.ToString()), () => new ShellToken(TokenType.RedirectStdOut)),
                 new ShellInputHandler.InputMap("1" + chars.RedirectChar, new LexerOperatorState("1" + chars.RedirectChar), () => new ShellToken(TokenType.RedirectStdOut)),
                 new ShellInputHandler.InputMap("2" + chars.RedirectChar, new LexerOperatorState("2" + chars.RedirectChar), () => new ShellToken(TokenType.RedirectStdErr)),
+                new ShellInputHandler.InputMap(chars.PipeChar.ToString(), new LexerOperatorState(chars.PipeChar.ToString()), () => new ShellToken(TokenType.Pipe)),
                 new ShellInputHandler.InputMap(chars.AppendSeq, new LexerOperatorState(chars.AppendSeq), () => new ShellToken(TokenType.AppendStdOut)),
                 new ShellInputHandler.InputMap("1" + chars.AppendSeq, new LexerOperatorState("1" + chars.AppendSeq), () => new ShellToken(TokenType.AppendStdOut)),
                 new ShellInputHandler.InputMap("2" + chars.AppendSeq, new LexerOperatorState("2" + chars.AppendSeq), () => new ShellToken(TokenType.AppendStdErr)),
             
             ]);
+
+
+
 
         shell.Run();
 
@@ -60,7 +65,7 @@ class Program
 
 public struct ShellChars : IShellChars
 {
-    public ShellChars(char commandSeparator, char homeChar, char pathSeparator, char escapeChar, char singleQuote, char doubleQuote, char redirectChar, string appendSeq)
+    public ShellChars(char commandSeparator, char homeChar, char pathSeparator, char escapeChar, char singleQuote, char doubleQuote, char redirectChar, char pipeChar, string appendSeq)
     {
         CommandSeparator = commandSeparator;
         HomeChar = homeChar;
@@ -69,6 +74,7 @@ public struct ShellChars : IShellChars
         SingleQuote = singleQuote;
         DoubleQuote = doubleQuote;
         RedirectChar = redirectChar;
+        PipeChar = pipeChar;
         AppendSeq = appendSeq;
 
     }
@@ -86,6 +92,8 @@ public struct ShellChars : IShellChars
     public char DoubleQuote { get; }
 
     public char RedirectChar { get; }
+
+    public char PipeChar { get; }
 
     public string AppendSeq { get; }
 

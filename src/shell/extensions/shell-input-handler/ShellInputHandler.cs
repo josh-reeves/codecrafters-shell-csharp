@@ -4,9 +4,9 @@ namespace Shell.Extensions.ShellInputHandler;
 
 /// <summary>
 /// The ShellInputHandler class provides a unified interface for converting raw
-///  input into a format that can be executed by the shell. The class deletgates 
-///  acts as a coordinator for this process, delegating the implementation of
-///  each part of the process to a separate component.
+///  input into a format that can be executed by the shell. The class acts as a
+///  coordinator for this process, delegating the implementation of each part of 
+///  the process to a separate component.
 /// 
 /// To facilitate this, the class also provides methods and structures that 
 ///  unify and simplify the process configuring the individual components.
@@ -22,20 +22,20 @@ public class ShellInputHandler : IInputHandler
         
         RegisterInput(inputMaps ?? []);
 
-    }
+    } 
 
     #endregion
 
     #region Properites
     /// <summary>
-    /// The Lexer convers raw input into a queue of tokens that can be easily
-    ///  interpreted regardless of any syntactic idiosyncrasies in the input.
+    /// The Lexer converts raw input into a queue of tokens that can be easily
+    ///  interpreted regardless of any syntactic idiosyncrasies.
     /// </summary>
     public ILexer Lexer { get; set; }
 
     /// <summary>
     /// The Expander handles any special characters or sequences in the raw
-    ///  input. Removing, replacing or otherwise modifying them as defined
+    ///  input; removing, replacing or otherwise modifying them as defined
     ///  by the component.
     /// </summary>
     public IExpander Expander { get; set; }
@@ -51,8 +51,7 @@ public class ShellInputHandler : IInputHandler
     #region Methods
     /// <summary>
     /// Receives input and converts it into a syntax tree that can be executed
-    ///  by the shell by lexing, expanding and parsing the input into a syntax
-    ///  tree.
+    ///  by the shell.
     /// </summary>
     /// <param name="input"></param>
     /// <returns>A syntax tree representing the provided input.</returns>

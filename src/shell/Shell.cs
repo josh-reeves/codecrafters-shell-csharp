@@ -77,7 +77,7 @@ public class Shell : IShell
 
                 ShellCommand command = new(this);
 
-                command.Execute(inputHandler.HandleInput(Console.ReadLine() ?? string.Empty));
+                command.Execute(inputHandler.HandleInput(Console.ReadLine() ?? string.Empty).Root);
 
                 if (command.IsStdOutRedirected)
                 {

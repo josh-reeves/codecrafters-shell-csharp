@@ -7,6 +7,8 @@ public interface IShellCommand
 
     public bool IsStdErrRedirected { get; set; }
 
+    public string StandardInput { get; }
+
     public string StandardOutput { get; }
 
     public string StandardError { get; }
