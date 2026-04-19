@@ -36,6 +36,8 @@ public class ShellCommand : IShellCommand
     #region Properties
     protected IShell Shell { get; set; }
 
+    public bool IsStdInRedirected { get => !string.IsNullOrWhiteSpace(StandardInput); }
+
     public bool IsStdOutRedirected { get; set; }
 
     public bool IsStdErrRedirected { get; set; }
@@ -48,31 +50,25 @@ public class ShellCommand : IShellCommand
     {
         get
         {
-            string result = standardOutput;
-
+            string value = standardOutput;
             standardOutput = string.Empty;
 
-            return result;
-
+            return value;
         }
 
         set => standardOutput = value;
     }
-
     public string StandardError
     {
         get
         {
-            string result = standardError;
-
+            string value = standardError;
             standardError = string.Empty;
 
-            return result;
-            
+            return value;
         }
 
         set => standardError = value;
-
     }
 
     #endregion
@@ -169,17 +165,7 @@ public class ShellCommand : IShellCommand
         {
             stream = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.Inheritable);
 
-            Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
-            
-            IsStdOutRedirected = true;
-
-            new ShellCommand(this.Shell)
-            {
-                StandardInput = ((AnonymousPipeServerStream)stream).GetClientHandleAsString()
-
-            }.Execute(node.RightChild);
-
-            return;
+            RedirectToPipe(node, stream);
 
         }
 
@@ -187,15 +173,15 @@ public class ShellCommand : IShellCommand
         {
             stream = new FileStream(output.FileToken.ExpandedValue, output.FileMode, FileAccess.Write);
 
-            RedirectToFile(stream, node.Data.Type);
+            RedirectToFile(node, stream);
 
         }
 
     }
 
-    private void RedirectToFile(Stream stream, TokenType tokenType)
+    private void RedirectToFile(IShellNode node, Stream stream)
     {
-        if (tokenType is TokenType.RedirectStdOut or TokenType.AppendStdOut)
+        if (node.Data.Type is TokenType.RedirectStdOut or TokenType.AppendStdOut)
         {
             Shell.OutWriters.Add(new StreamWriter(stream) {AutoFlush = true});
 
@@ -203,7 +189,7 @@ public class ShellCommand : IShellCommand
            
         }
 
-        if (tokenType is TokenType.RedirectStdErr or TokenType.AppendStdErr)
+        if (node.Data.Type is TokenType.RedirectStdErr or TokenType.AppendStdErr)
         {
             Shell.ErrWriters.Add(new StreamWriter(stream) {AutoFlush = true });
 
@@ -213,6 +199,27 @@ public class ShellCommand : IShellCommand
 
     }
 
+    private void RedirectToPipe(IShellNode node, Stream stream)
+    {
+        Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
+        
+        IsStdOutRedirected = true;
+
+        string clientHandle = ((AnonymousPipeServerStream)stream).GetClientHandleAsString();
+
+        new ShellCommand(Shell)
+        {
+            StandardInput = clientHandle
+
+        }.Execute(node.LeftChild);
+
+        if (node.LeftChild is not null)
+        {
+            node.RemoveChild(node.LeftChild);
+
+        }
+
+    }
 
     /// <summary>
     /// Execute a command that isn't built into the shell.
@@ -226,19 +233,14 @@ public class ShellCommand : IShellCommand
             StartInfo = new ProcessStartInfo()
             {
                 FileName = command,
-                UseShellExecute = !IsStdOutRedirected && !IsStdErrRedirected,
+                UseShellExecute = false,
                 RedirectStandardOutput = IsStdOutRedirected,
-                RedirectStandardError = IsStdErrRedirected
+                RedirectStandardError = IsStdErrRedirected,
+                RedirectStandardInput = IsStdInRedirected
 
             }
             
         };
-
-        if (!string.IsNullOrWhiteSpace(StandardInput))
-        {
-            process.StartInfo.ArgumentList.Add(StandardInput);
-
-        }
 
         foreach (string arg in args)
         {
@@ -248,6 +250,18 @@ public class ShellCommand : IShellCommand
 
         process.Start();
 
+        if (IsStdInRedirected)
+        {
+            AnonymousPipeClientStream clientStream = new(PipeDirection.In, StandardInput);
+            StreamWriter writer = process.StandardInput;
+
+            writer.Write(clientStream);
+
+          
+            writer.Dispose();   
+
+        }
+        
         if (IsStdOutRedirected)
         {
             StandardOutput = process.StandardOutput.ReadToEnd();
@@ -261,6 +275,7 @@ public class ShellCommand : IShellCommand
         }
 
         process.WaitForExit();
+        process.Close();
 
     }
 

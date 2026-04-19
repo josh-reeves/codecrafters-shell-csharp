@@ -32,7 +32,6 @@ static class ParsingMethods
 {
     const string errMsg = "A parsing error occurred.";
 
-
     public static ITree Parse(Queue<IToken> tokens)
     {
         CommandTree ast = new CommandTree();

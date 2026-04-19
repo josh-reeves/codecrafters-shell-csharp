@@ -86,7 +86,7 @@ public class Shell : IShell
                     foreach(StreamWriter writer in OutWriters)
                     {
                         writer.Write(output);
-                        
+
                     }
 
                 }
