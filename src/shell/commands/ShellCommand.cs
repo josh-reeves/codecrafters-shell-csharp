@@ -266,8 +266,6 @@ public class ShellCommand : IShellCommand
 
             node.RemoveChild(child);
 
-
-
         }
         catch (Exception ex)
         {
@@ -312,9 +310,14 @@ public class ShellCommand : IShellCommand
 
         if (IsStdInRedirected)
         {
-            string msg = Shell.InReader?.ReadToEnd() ?? string.Empty;
+            string? msg;
 
-            process.StandardInput.WriteLine(msg);
+            while ((msg = Shell.InReader?.ReadLine()) is not null)
+            {
+                process.StandardInput.WriteLine(msg);
+
+            }
+
             process.StandardInput.Close();
        
         }

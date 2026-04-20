@@ -114,12 +114,7 @@ public class Shell : IShell
 
                 }
 
-                foreach(Process fork in Forks)
-                {
-                    fork.WaitForExit();
-                    fork.Close();
-
-                }
+                Reset();
 
                 if (externalInput is not null)
                 {
@@ -134,8 +129,6 @@ public class Shell : IShell
 
             }
 
-            Reset();
-
         }
 
     }
@@ -148,6 +141,12 @@ public class Shell : IShell
         {
             writer.Close();
 
+        }
+
+        foreach (Process fork in Forks)
+        {
+            fork.WaitForExit();
+            fork.Close();
         }
 
         InReader?.Dispose();
