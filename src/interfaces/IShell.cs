@@ -1,4 +1,4 @@
-using Shell.Extensions.ShellInputHandler;
+using System.Diagnostics;
 
 namespace Interfaces;
 
@@ -15,7 +15,11 @@ public interface IShell
 
     public string HomeDir { get; }
 
+    public StreamReader? InReader { get; set; }
+
     public IList<string> PathList { get; }
+
+    public IList<Process> Forks { get; }
 
     public IList<StreamWriter> OutWriters { get; }
     
@@ -26,7 +30,7 @@ public interface IShell
     #endregion
 
     #region Methods
-    public void Run();
+    public void Run(string? externalInput);
 
     public bool IsExecutable(string[] files);
 

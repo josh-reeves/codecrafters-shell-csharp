@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Interfaces;
 using Shell.Commands;
 using Type = Shell.Commands.Type;
@@ -18,6 +19,7 @@ public class Shell : IShell
     {
         prompt = promptSeq;
 
+        Forks = [];
         OutWriters = [];
         ErrWriters = [];
 
@@ -52,7 +54,11 @@ public class Shell : IShell
 
     public string HomeDir { get => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); }
 
+    public StreamReader? InReader { get; set; }
+
     public IList<string> PathList { get => Path.Split(PathSeparator).ToList(); }
+
+    public IList<Process> Forks { get; }
 
     public IList<StreamWriter> OutWriters { get; set;}
 
@@ -63,7 +69,7 @@ public class Shell : IShell
     #endregion
 
     #region Methods
-    public void Run()
+    public void Run(string? externalInput = null)
     {
         ShellIsActive = true;
 
@@ -71,13 +77,18 @@ public class Shell : IShell
         {
             try
             {
-                Reset();
-
-                Console.Write(prompt);
-
                 ShellCommand command = new(this);
 
-                command.Execute(inputHandler.HandleInput(Console.ReadLine() ?? string.Empty).Root);
+                if (externalInput is null)
+                {
+                    Console.Write(prompt);
+                    
+                }
+
+                command.Execute(inputHandler.HandleInput(
+                    externalInput ??
+                    Console.ReadLine() ?? 
+                    string.Empty).Root);
 
                 if (command.IsStdOutRedirected)
                 {
@@ -103,12 +114,27 @@ public class Shell : IShell
 
                 }
 
+                foreach(Process fork in Forks)
+                {
+                    fork.WaitForExit();
+                    fork.Close();
+
+                }
+
+                if (externalInput is not null)
+                {
+                    return;
+
+                }
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
 
             }
+
+            Reset();
 
         }
 
@@ -124,6 +150,8 @@ public class Shell : IShell
 
         }
 
+        InReader?.Dispose();
+        Forks.Clear();
         OutWriters.Clear();
         ErrWriters.Clear();
 

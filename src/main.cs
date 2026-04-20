@@ -1,3 +1,4 @@
+using System.IO.Pipes;
 using Interfaces;
 using Shell.Extensions.ShellInputHandler;
 using Shell.Extensions.ShellInputHandler.Expander;
@@ -9,8 +10,32 @@ namespace Shell;
 
 class Program
 {
-    static void Main()
+    const string inputFlag = "-i";
+
+    static void Main(string[] args)
     {
+        string? command = null,
+                streamHandle = null;
+
+        for (int i = 0; i <= args.Length - 1; i++)
+        {
+            if (i == 0)
+            {
+                command = args[i];
+
+                continue;
+            }
+
+            if (args[i] == inputFlag && args.Length >= i + 1)
+            {
+                i++;
+
+                streamHandle = args[i];
+            
+            }
+
+        }
+
         ShellChars chars = new(
             commandSeparator: ' ',
             homeChar: '~',
@@ -54,10 +79,15 @@ class Program
             
             ]);
 
+        if (streamHandle is not null)
+        {
+            AnonymousPipeClientStream stream = new(PipeDirection.In, streamHandle);
+            
+            shell.InReader = new StreamReader(stream);
+            
+        }
 
-
-
-        shell.Run();
+        shell.Run(command);
 
     }
 

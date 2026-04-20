@@ -21,7 +21,6 @@ public class ShellCommand : IShellCommand
         command = string.Empty;
         standardOutput = string.Empty;
         standardError = string.Empty;
-        StandardInput = string.Empty;
 
         arguments = new List<string>();
 
@@ -36,15 +35,13 @@ public class ShellCommand : IShellCommand
     #region Properties
     protected IShell Shell { get; set; }
 
-    public bool IsStdInRedirected { get => !string.IsNullOrWhiteSpace(StandardInput); }
+    public bool IsStdInRedirected { get => !(Shell.InReader == null); }
 
     public bool IsStdOutRedirected { get; set; }
 
     public bool IsStdErrRedirected { get; set; }
 
     public string InvalidCmdMsg { get; set; }
-
-    public string StandardInput { get; private set; }
 
     public string StandardOutput
     {
@@ -58,6 +55,7 @@ public class ShellCommand : IShellCommand
 
         set => standardOutput = value;
     }
+
     public string StandardError
     {
         get
@@ -69,6 +67,7 @@ public class ShellCommand : IShellCommand
         }
 
         set => standardError = value;
+
     }
 
     #endregion
@@ -134,6 +133,38 @@ public class ShellCommand : IShellCommand
         
     }
 
+    private string RestoreCommand(IShellNode node)
+    {
+        string command = string.Empty;
+
+        Stack<ITreeNode> nodes = new();
+
+        nodes.Push(node);
+
+        while (nodes.Count > 0)
+        {
+            node = (IShellNode)nodes.Pop();
+
+            command += node.Data.RawValue + Shell.CommandSeparator;
+
+            if (node.RightChild is not null)
+            {
+                nodes.Push(node.RightChild);
+
+            }
+
+            if (node.LeftChild is not null)
+            {
+                nodes.Push(node.LeftChild);
+
+            }
+               
+        }      
+
+        return command;  
+
+    }
+
     private void ProcessNode(IShellNode node)
     {        
         switch(node.NodeType)
@@ -159,28 +190,24 @@ public class ShellCommand : IShellCommand
 
     private void Redirect(IShellNode node)
     {
-        Stream stream;
+        if (node is IOutputToFileNode output)
+        {
+            RedirectToFile(output);
+
+        }
 
         if (node.Data.Type is TokenType.Pipe)
         {
-            stream = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.Inheritable);
-
-            RedirectToPipe(node, stream);
+            RedirectToPipe(node);
 
         }
-
-        if (node is IOutputToFileNode output)
-        {
-            stream = new FileStream(output.FileToken.ExpandedValue, output.FileMode, FileAccess.Write);
-
-            RedirectToFile(node, stream);
-
-        }
-
+        
     }
 
-    private void RedirectToFile(IShellNode node, Stream stream)
+    private void RedirectToFile(IOutputToFileNode node)
     {
+        FileStream stream = new(node.FileToken.ExpandedValue, node.FileMode, FileAccess.Write);
+
         if (node.Data.Type is TokenType.RedirectStdOut or TokenType.AppendStdOut)
         {
             Shell.OutWriters.Add(new StreamWriter(stream) {AutoFlush = true});
@@ -199,25 +226,55 @@ public class ShellCommand : IShellCommand
 
     }
 
-    private void RedirectToPipe(IShellNode node, Stream stream)
+    private void RedirectToPipe(IShellNode node)
     {
-        Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
-        
-        IsStdOutRedirected = true;
-
-        string clientHandle = ((AnonymousPipeServerStream)stream).GetClientHandleAsString();
-
-        new ShellCommand(Shell)
+        try
         {
-            StandardInput = clientHandle
+            if (node.LeftChild is not IShellNode child)
+            {
+                return;
+                
+            }  
 
-        }.Execute(node.LeftChild);
+            AnonymousPipeServerStream stream = new(
+                PipeDirection.Out, 
+                HandleInheritability.Inheritable);
 
-        if (node.LeftChild is not null)
-        {
-            node.RemoveChild(node.LeftChild);
+            Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
+
+            IsStdOutRedirected = true;
+
+            Process process = new()
+            {
+                StartInfo = new()
+                {
+                    FileName = "codecrafters-shell",
+                    UseShellExecute = false
+
+                }
+
+            };
+
+            process.StartInfo.ArgumentList.Add(RestoreCommand(child));
+            process.StartInfo.ArgumentList.Add("-i");
+            process.StartInfo.ArgumentList.Add(stream.GetClientHandleAsString());
+
+            process.Start();
+            Shell.Forks.Add(process);
+
+            stream.DisposeLocalCopyOfClientHandle();
+
+            node.RemoveChild(child);
+
+
 
         }
+        catch (Exception ex)
+        {
+            Trace.WriteLine(ex);
+
+        }
+
 
     }
 
@@ -233,7 +290,10 @@ public class ShellCommand : IShellCommand
             StartInfo = new ProcessStartInfo()
             {
                 FileName = command,
-                UseShellExecute = false,
+                UseShellExecute = 
+                    !IsStdInRedirected &&
+                    !IsStdOutRedirected &&
+                    !IsStdErrRedirected,
                 RedirectStandardOutput = IsStdOutRedirected,
                 RedirectStandardError = IsStdErrRedirected,
                 RedirectStandardInput = IsStdInRedirected
@@ -252,14 +312,11 @@ public class ShellCommand : IShellCommand
 
         if (IsStdInRedirected)
         {
-            AnonymousPipeClientStream clientStream = new(PipeDirection.In, StandardInput);
-            StreamWriter writer = process.StandardInput;
+            string msg = Shell.InReader?.ReadLine() ?? string.Empty;
 
-            writer.Write(clientStream);
-
-          
-            writer.Dispose();   
-
+            process.StandardInput.WriteLine(msg);
+            process.StandardInput.Close();
+       
         }
         
         if (IsStdOutRedirected)

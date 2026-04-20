@@ -3,11 +3,11 @@ namespace Interfaces;
 public interface IShellCommand
 {
     #region Properties
+    public bool IsStdInRedirected { get; }
+
     public bool IsStdOutRedirected { get; set; }
 
     public bool IsStdErrRedirected { get; set; }
-
-    public string StandardInput { get; }
 
     public string StandardOutput { get; }
 
