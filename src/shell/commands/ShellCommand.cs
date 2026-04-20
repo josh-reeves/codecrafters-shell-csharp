@@ -312,7 +312,7 @@ public class ShellCommand : IShellCommand
 
         if (IsStdInRedirected)
         {
-            string msg = Shell.InReader?.ReadLine() ?? string.Empty;
+            string msg = Shell.InReader?.ReadToEnd() ?? string.Empty;
 
             process.StandardInput.WriteLine(msg);
             process.StandardInput.Close();
