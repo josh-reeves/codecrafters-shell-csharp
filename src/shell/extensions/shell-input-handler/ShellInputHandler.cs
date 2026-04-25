@@ -78,7 +78,7 @@ public class ShellInputHandler : IInputHandler
         {
             if (inputMap.ExpansionMethod != null)
             {
-                Expander.ExpansionMap.Add(inputMap.Sequence[0], inputMap.ExpansionMethod);
+                Expander.ExpansionMap.Add(inputMap.Sequence, inputMap.ExpansionMethod);
 
             }
 
@@ -110,7 +110,7 @@ public class ShellInputHandler : IInputHandler
     public struct InputMap : IInputMap
     {
         #region Constructor(s)
-        public InputMap(string sequence, IState? state = null, Func<IToken>? token = null, Func<string, (string, string)>? expansionMethod = null)
+        public InputMap(string sequence, IState? state = null, Func<IToken>? token = null, Func<string, IExpansion>? expansionMethod = null)
         {
             Sequence = sequence;
             State = state;
@@ -128,7 +128,7 @@ public class ShellInputHandler : IInputHandler
 
         public Func<IToken>? Token { get; }
 
-        public Func<string, (string, string)>? ExpansionMethod { get; }
+        public Func<string, IExpansion>? ExpansionMethod { get; }
 
         #endregion
         

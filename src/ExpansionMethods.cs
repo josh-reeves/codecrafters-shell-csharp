@@ -17,37 +17,31 @@ public class ExpansionMethods
     #endregion
 
     #region Methods
-    public (string original, string expansion) ExpandEscape(string input)
-    {
-        return (input[0..2], input[1].ToString());
+    public IExpansion ExpandEscape(string input)
+        => new Expansion(input[0..(input.Length >= 3 ? 2 : input.Length)], input.Length >= 2 ? input[1].ToString() : string.Empty);
 
-    }
 
-    public (string original, string expansion) ExpandSingleQuote(string input)
+    public IExpansion ExpandSingleQuote(string input)
     {        
         int end = input.IndexOf(chars.SingleQuote, 1) >= 1 ? input.IndexOf(chars.SingleQuote, 1) : input.Length;
-
-        string original = input[0..(end < input.Length ? end + 1 : end)],
-               expansion = input[1..end];
-
-        return (original, expansion);
+        
+        return new Expansion(input[0..(end < input.Length ? end + 1 : end)], input[1..end]);
 
     }
 
-    public (string original, string expansion) ExpandDoubleQuote(string input)
+    public IExpansion ExpandDoubleQuote(string input)
     {
         int index = 1;
 
-        string original,
-               expansion = input;
+        IExpansion expansion = new Expansion(input, input);
 
-        while (index < expansion.Length && expansion[index] != chars.DoubleQuote) 
+        while (index < expansion.Expanded.Length && expansion.Expanded[index] != chars.DoubleQuote) 
         {
-            index = expansion.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], index) >= 0 ? expansion.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], index) : expansion.Length;
+            index = expansion.Expanded.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], index) >= 0 ? expansion.Expanded.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], index) : expansion.Expanded.Length;
 
-            if (expansion[index >= expansion.Length ? index - 1 : index] == chars.EscapeChar)
+            if (expansion.Expanded[index >= expansion.Expanded.Length ? index - 1 : index] == chars.EscapeChar)
             {
-                expansion = expansion.Remove(index, 1);
+                expansion.Expanded = expansion.Expanded.Remove(index, 1);
 
                 index++;
 
@@ -55,14 +49,35 @@ public class ExpansionMethods
 
         }
 
-        int offset = input.Length - expansion.Length;
+        int offset = input.Length - expansion.Expanded.Length;
 
-        original = input[0..(index + offset < input.Length ? index + offset + 1 : index + offset)];
-        expansion = expansion[1..index];
+        expansion.Original = input[0..(index + offset < input.Length ? index + offset + 1 : index + offset)];
+        expansion.Expanded = expansion.Expanded[1..index];
 
-        return (original, expansion);
+        return expansion;
 
     } 
+
+    #endregion
+    
+    #region Structs
+    public struct Expansion : IExpansion
+    {
+        public Expansion(string original, string expansion)
+        {
+            Original = original;
+            Expanded = expansion;
+            
+        }
+
+        #region Properties
+        public string Original { get; set; }
+
+        public string Expanded { get; set; }
+
+        #endregion
+
+    }
 
     #endregion
 }

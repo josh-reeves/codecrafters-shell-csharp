@@ -1,8 +1,14 @@
+using System;
+
 namespace Interfaces;
 
 public interface IExpansion
 {
-    public string Original { get; }
-    public string Expansion { get; }
+    #region Properties
+    public string Original { get; set; }
+
+    public string Expanded { get; set; }
+
+    #endregion
 
 }

@@ -123,7 +123,24 @@ public class ShellCommand : IShellCommand
 
         if (Shell.IsExecutable([..Shell.Search(command, Shell.PathList)]))
         {
-            ExecuteExternal(command, [..arguments]);
+            Process process = ExecuteExternal(command, [..arguments]);
+
+
+            if (IsStdOutRedirected)
+            {
+                StandardOutput = process.StandardOutput.ReadToEnd();
+
+            }
+
+            if (IsStdErrRedirected)
+            {
+                StandardError = process.StandardError.ReadToEnd();
+                
+            }
+
+
+            process.WaitForExit();
+            process.Close();
 
             return;
             
@@ -239,31 +256,25 @@ public class ShellCommand : IShellCommand
             AnonymousPipeServerStream stream = new(
                 PipeDirection.Out, 
                 HandleInheritability.Inheritable);
+      
+            Process process = ExecuteExternal(
+                "codecrafters-shell",
+                [
+                    RestoreCommand(child),
+                    "-i",
+                    stream.GetClientHandleAsString()
+                    
+                ],
+                new ProcessStartInfo() { UseShellExecute = false });
+
+            Shell.Forks.Add(process);
 
             Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
 
-            IsStdOutRedirected = true;
-
-            Process process = new()
-            {
-                StartInfo = new()
-                {
-                    FileName = "codecrafters-shell",
-                    UseShellExecute = false
-
-                }
-
-            };
-
-            process.StartInfo.ArgumentList.Add(RestoreCommand(child));
-            process.StartInfo.ArgumentList.Add("-i");
-            process.StartInfo.ArgumentList.Add(stream.GetClientHandleAsString());
-
-            process.Start();
-            Shell.Forks.Add(process);
-
             stream.DisposeLocalCopyOfClientHandle();
 
+            IsStdOutRedirected = true;
+            
             node.RemoveChild(child);
 
         }
@@ -273,7 +284,6 @@ public class ShellCommand : IShellCommand
 
         }
 
-
     }
 
     /// <summary>
@@ -281,7 +291,7 @@ public class ShellCommand : IShellCommand
     /// </summary>
     /// <param name="command">The command to execute.</param>
     /// <param name="args">The arguments to pass to the command.</param>
-    private void ExecuteExternal(string command, string[] args)
+    private Process ExecuteExternal(string command, string[] args, ProcessStartInfo? startInfo = null)
     {
         Process process = new()
         {
@@ -299,6 +309,14 @@ public class ShellCommand : IShellCommand
             }
             
         };
+
+        process.StartInfo = startInfo ?? process.StartInfo;
+
+        if (string.IsNullOrWhiteSpace(process.StartInfo.FileName))
+        {
+            process.StartInfo.FileName = command;
+
+        }
 
         foreach (string arg in args)
         {
@@ -321,21 +339,8 @@ public class ShellCommand : IShellCommand
             process.StandardInput.Close();
        
         }
-        
-        if (IsStdOutRedirected)
-        {
-            StandardOutput = process.StandardOutput.ReadToEnd();
 
-        }
-
-        if (IsStdErrRedirected)
-        {
-            StandardError = process.StandardError.ReadToEnd();
-            
-        }
-
-        process.WaitForExit();
-        process.Close();
+        return process;
 
     }
 

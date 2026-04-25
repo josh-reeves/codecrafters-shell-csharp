@@ -7,14 +7,14 @@ public class Expander : IExpander
     #region Constructor(s)
     public Expander()
     {
-        ExpansionMap = new Dictionary<char, Func<string, (string, string)>>();
+        ExpansionMap = new Dictionary<string, Func<string, IExpansion>>();
         
     }
 
     #endregion
 
     #region Properties
-    public IDictionary<char, Func<string, (string original, string expansion)>> ExpansionMap { get; }
+    public IDictionary<string, Func<string, IExpansion>> ExpansionMap { get; }
 
     #endregion
 
@@ -39,28 +39,46 @@ public class Expander : IExpander
 
         for (int i = 0; i < input.Length; i++)
         {
-            char currentChar = input[i];
-
-            if (ExpansionMap.ContainsKey(currentChar))
+            if (LookupKey(input[i..]) is string key)
             {
-                (string original, string expansion) = ExpansionMap[currentChar](input[i..input.Length]);
+                IExpansion expansion = ExpansionMap[input[i..(i + key.Length)]](input[i..input.Length]);
 
-                result += expansion;
 
-                i += original.Length - 1;
+                result += expansion.Expanded;
+
+                i += expansion.Original.Length - 1;
 
                 continue;
             
             }
 
-            result += currentChar;            
+            result += input[i];
+
         }
 
         return result;
         
     }
 
+    private string? LookupKey(string input)
+    {
+        for(int i = ExpansionMap.Keys.MaxBy(str => str.Length)?.Length ?? 0; i > 0; i--)
+        {
+            string key = input.Length >= i ? input[0..i] : string.Empty;
+
+            if (ExpansionMap.ContainsKey(key))
+            {
+                return key;
+
+            }
+
+        }
+
+        return null;
+        
+    }
+
+
     #endregion
 
 }
-

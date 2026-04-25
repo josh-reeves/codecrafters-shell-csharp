@@ -65,7 +65,8 @@ class Program
         inputHandler.RegisterInput(
             [
                 new ShellInputHandler.InputMap(chars.CommandSeparator.ToString(), new LexerSeparatorState()),
-                new ShellInputHandler.InputMap(chars.HomeChar.ToString(), expansionMethod: (input) => (input[0].ToString(), shell.HomeDir)),
+                new ShellInputHandler.InputMap(chars.HomeChar.ToString(), expansionMethod: (input) => new ExpansionMethods.Expansion(input[0].ToString(), shell.HomeDir)),
+                new ShellInputHandler.InputMap(@"\\n" , expansionMethod: (input) => new ExpansionMethods.Expansion(@"\\n", "\n")),
                 new ShellInputHandler.InputMap(chars.EscapeChar.ToString(), new LexerEscapeState(), () => new ShellToken(TokenType.Word), expansionMethods.ExpandEscape),
                 new ShellInputHandler.InputMap(chars.SingleQuote.ToString(), new LexerGroupDelimiterState(chars.SingleQuote), () => new ShellToken(TokenType.Word), expansionMethods.ExpandSingleQuote),
                 new ShellInputHandler.InputMap(chars.DoubleQuote.ToString(), new LexerGroupDelimiterState(chars.DoubleQuote, chars.EscapeChar), () => new ShellToken(TokenType.Word), expansionMethods.ExpandDoubleQuote),
