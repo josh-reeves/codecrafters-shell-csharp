@@ -4,6 +4,39 @@ using Interfaces;
 
 namespace Shell.Commands;
 
+
+/* [DESIGN NOTE] Typing up the below comment and considering the following:
+ *  "This includes the creation of any required shell forks...." On the one
+ *  hand, the shell should probably be responsible for forking itself (and maybe
+ *  even setting up its pipes). It makes sense, and they add a lot of complexity 
+ *  to this class that could stand to be offloaded elsewhere. On the other hand,
+ *  the benefit of handling those functions here, is that this class already 
+ *  includes logic for executing external commands (for forking), and must be
+ *  able to identify and handle redirection nodes, which is tangentially
+ *  related.
+ *
+ *  This isn't a big deal right now, and may even be considered beneficial by
+ *   some (deep class vs. shallow class). It may be something to consider in the
+ *   future, though.*/
+
+/// <summary>
+///  The ShellCommand class handles the interpretation and execution of parsed 
+///   shell input. This includes the creation of any required shell forks and
+///   their associated pipes, as well as creating any required input and output 
+///   streams. 
+/// 
+///  The way the class does this is somewhat recursive in nature:
+///   1. When the class's Execute method is passed an IShellNode, it begins
+///       walking, interpreting and executing the tree that propagates from that
+///       node. 
+///   2. The class also acts as a base class for the various shell built-ins, 
+///       where its Execute method typically takes a list of optional arguments 
+///       to pass to the built-in.
+/// 
+///  So the class will take a command tree, interpret it and, if that command
+///   tree represents a built-in, create a new instance of itself to handle the
+///   execution of the built-in's logic.
+/// </summary>
 public class ShellCommand : IShellCommand
 {
     #region Fields
@@ -51,9 +84,11 @@ public class ShellCommand : IShellCommand
             standardOutput = string.Empty;
 
             return value;
+        
         }
 
         set => standardOutput = value;
+    
     }
 
     public string StandardError
@@ -102,8 +137,10 @@ public class ShellCommand : IShellCommand
                 nodes.Push(node.LeftChild);
 
             }
-               
+
         }
+
+        Process? process = null;
 
         if (Shell.Builtins.ContainsKey(command))
         {
@@ -114,33 +151,35 @@ public class ShellCommand : IShellCommand
             
             Shell.Builtins[command].Execute(arguments.ToArray());
 
-            StandardOutput = Shell.Builtins[command].StandardOutput;
-            StandardError = Shell.Builtins[command].StandardError;
+            StandardOutput = builtin.StandardOutput;
+            StandardError = builtin.StandardError;
 
-            return;
-            
+            return;   
+
         }
 
         if (Shell.IsExecutable([..Shell.Search(command, Shell.PathList)]))
         {
-            Process process = ExecuteExternal(command, [..arguments]);
+            process = ExecuteExternal(command, [..arguments]);
 
+            DataReceivedEventHandler outHandler = new DataReceivedEventHandler(
+                (sender, e) => StandardOutput += e.Data),
+                                     errHandler = new DataReceivedEventHandler(
+                (sender, e) => StandardError += e.Data);
 
             if (IsStdOutRedirected)
             {
-                StandardOutput = process.StandardOutput.ReadToEnd();
+                process.OutputDataReceived += outHandler;
+                process.BeginOutputReadLine();
 
             }
 
             if (IsStdErrRedirected)
             {
-                StandardError = process.StandardError.ReadToEnd();
+                process.ErrorDataReceived += errHandler;
+                process.BeginErrorReadLine();
                 
             }
-
-
-            process.WaitForExit();
-            process.Close();
 
             return;
             
@@ -150,6 +189,15 @@ public class ShellCommand : IShellCommand
         
     }
 
+    /// <summary>
+    ///     Restores a command string from the supplied node.
+    /// </summary>
+    /// <param name="node">
+    ///     The node from which to restore the command string.
+    /// </param>
+    /// <returns>
+    ///     A string containing the original command used to create the node.
+    /// </returns>
     private string RestoreCommand(IShellNode node)
     {
         string command = string.Empty;
@@ -253,6 +301,11 @@ public class ShellCommand : IShellCommand
                 
             }  
 
+            /* Remove the command node from the tree so that it isn't processed
+             *  twice. Do this before forking the shell in the even that the
+             *  forked shell runs indefinitely :*/
+            node.RemoveChild(child);
+
             AnonymousPipeServerStream stream = new(
                 PipeDirection.Out, 
                 HandleInheritability.Inheritable);
@@ -267,15 +320,11 @@ public class ShellCommand : IShellCommand
                 ],
                 new ProcessStartInfo() { UseShellExecute = false });
 
-            Shell.Forks.Add(process);
-
             Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
 
             stream.DisposeLocalCopyOfClientHandle();
 
             IsStdOutRedirected = true;
-            
-            node.RemoveChild(child);
 
         }
         catch (Exception ex)
@@ -287,10 +336,23 @@ public class ShellCommand : IShellCommand
     }
 
     /// <summary>
-    /// Execute a command that isn't built into the shell.
+    ///     Execute a command that isn't built into the shell.
     /// </summary>
-    /// <param name="command">The command to execute.</param>
-    /// <param name="args">The arguments to pass to the command.</param>
+    /// <param name="command">
+    ///     The command to execute.
+    /// </param>
+    /// <param name="args">
+    ///     The arguments to supply to the command.
+    /// </param>
+    /// <param name="startInfo">
+    ///     Optional override for the default start info 
+    ///     provided by the method. If a filename is included, it will override the
+    ///     supplied command. Otherwise the supplied command will be executed with
+    ///     the provided start info.
+    /// </param>
+    /// <returns>
+    ///     The process object created and started by the method.
+    /// </returns>
     private Process ExecuteExternal(string command, string[] args, ProcessStartInfo? startInfo = null)
     {
         Process process = new()
@@ -304,7 +366,7 @@ public class ShellCommand : IShellCommand
                     !IsStdErrRedirected,
                 RedirectStandardOutput = IsStdOutRedirected,
                 RedirectStandardError = IsStdErrRedirected,
-                RedirectStandardInput = IsStdInRedirected
+                RedirectStandardInput = IsStdInRedirected,
 
             }
             
@@ -326,11 +388,13 @@ public class ShellCommand : IShellCommand
 
         process.Start();
 
+        Shell.Forks.Add(process);
+
         if (IsStdInRedirected)
         {
-            string? msg;
+            string? msg = Shell.InReader?.ReadLine();
 
-            while ((msg = Shell.InReader?.ReadLine()) is not null)
+            if (msg is not null)
             {
                 process.StandardInput.WriteLine(msg);
 

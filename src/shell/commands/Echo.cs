@@ -24,15 +24,10 @@ public class Echo : ShellCommand
         {
             StandardOutput += argList[i];
 
-            if (i == argList.Count - 1)
-            {
-                StandardOutput += "\n";
-
-            }
-            else
+            if (i < argList.Count - 1)
             {
                 StandardOutput += Shell.CommandSeparator;
-                
+
             }
             
         }
@@ -43,7 +38,7 @@ public class Echo : ShellCommand
 
         }
 
-        Console.Write(StandardOutput);
+        Console.WriteLine(StandardOutput);
 
     }
     

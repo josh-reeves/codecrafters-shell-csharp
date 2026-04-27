@@ -70,7 +70,7 @@ public class LexerDefaultState : LexerState
 
         }
 
-        for (int i = GetMaxOperatorLength(controller); i > 0; i--)
+        for (int i = controller.StateMap.Keys.MaxBy(str => str.Length)?.Length ?? 0; i > 0; i--)
         {            
             string seq = controller.RemainingText.Length >= i ? controller.RemainingText[0..i] : string.Empty;
 
@@ -91,20 +91,6 @@ public class LexerDefaultState : LexerState
             controller.Transition(controller.DefaultState);
             
         }
-        
-    }
-
-    private int GetMaxOperatorLength(ILexerStateController controller)
-    {
-        int maxLength = 0;
-
-        foreach (string op in controller.StateMap.Keys)
-        {
-            maxLength = op.Length > maxLength ? op.Length : maxLength;
-            
-        }
-
-        return maxLength;
         
     }
 

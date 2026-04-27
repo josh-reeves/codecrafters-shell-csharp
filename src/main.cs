@@ -8,9 +8,61 @@ using Shell.Extensions.ShellInputHandler.Parser;
 
 namespace Shell;
 
+/* [DESIGN NOTE] Broadly speaking, the execution of the shell can be broken down
+ *  into two main parts:*/
+
 class Program
 {
-    const string inputFlag = "-i";
+    /// <summary>
+    /// Static class providing defined flags for program arguments:
+    /// </summary>
+    static class Flags
+    {
+        static Flags()
+        {
+            InputFlag = "-i";
+
+        }
+        
+        public static string InputFlag { get; }
+        
+    }
+
+    public struct ShellChars : IShellChars
+    {
+        public ShellChars(char commandSeparator, char homeChar, char pathSeparator, char escapeChar, char singleQuote, char doubleQuote, char redirectChar, char pipeChar, string appendSeq)
+        {
+            CommandSeparator = commandSeparator;
+            HomeChar = homeChar;
+            PathSeparator = pathSeparator;
+            EscapeChar = escapeChar;
+            SingleQuote = singleQuote;
+            DoubleQuote = doubleQuote;
+            RedirectChar = redirectChar;
+            PipeChar = pipeChar;
+            AppendSeq = appendSeq;
+
+        }
+
+        public char CommandSeparator { get; }
+
+        public char HomeChar { get; }
+
+        public char PathSeparator { get; }
+
+        public char EscapeChar { get; }
+
+        public char SingleQuote { get; }
+
+        public char DoubleQuote { get; }
+
+        public char RedirectChar { get; }
+
+        public char PipeChar { get; }
+
+        public string AppendSeq { get; }
+
+    }
 
     static void Main(string[] args)
     {
@@ -26,7 +78,7 @@ class Program
                 continue;
             }
 
-            if (args[i] == inputFlag && args.Length >= i + 1)
+            if (args[i] == Flags.InputFlag && args.Length >= i + 1)
             {
                 i++;
 
@@ -66,7 +118,7 @@ class Program
             [
                 new ShellInputHandler.InputMap(chars.CommandSeparator.ToString(), new LexerSeparatorState()),
                 new ShellInputHandler.InputMap(chars.HomeChar.ToString(), expansionMethod: (input) => new ExpansionMethods.Expansion(input[0].ToString(), shell.HomeDir)),
-                new ShellInputHandler.InputMap(@"\\n" , expansionMethod: (input) => new ExpansionMethods.Expansion(@"\\n", "\n")),
+                new ShellInputHandler.InputMap(@"\n" , expansionMethod: (input) => new ExpansionMethods.Expansion(@"\n", "\n")),
                 new ShellInputHandler.InputMap(chars.EscapeChar.ToString(), new LexerEscapeState(), () => new ShellToken(TokenType.Word), expansionMethods.ExpandEscape),
                 new ShellInputHandler.InputMap(chars.SingleQuote.ToString(), new LexerGroupDelimiterState(chars.SingleQuote), () => new ShellToken(TokenType.Word), expansionMethods.ExpandSingleQuote),
                 new ShellInputHandler.InputMap(chars.DoubleQuote.ToString(), new LexerGroupDelimiterState(chars.DoubleQuote, chars.EscapeChar), () => new ShellToken(TokenType.Word), expansionMethods.ExpandDoubleQuote),
@@ -91,41 +143,5 @@ class Program
         shell.Run(command);
 
     }
-
-}
-
-public struct ShellChars : IShellChars
-{
-    public ShellChars(char commandSeparator, char homeChar, char pathSeparator, char escapeChar, char singleQuote, char doubleQuote, char redirectChar, char pipeChar, string appendSeq)
-    {
-        CommandSeparator = commandSeparator;
-        HomeChar = homeChar;
-        PathSeparator = pathSeparator;
-        EscapeChar = escapeChar;
-        SingleQuote = singleQuote;
-        DoubleQuote = doubleQuote;
-        RedirectChar = redirectChar;
-        PipeChar = pipeChar;
-        AppendSeq = appendSeq;
-
-    }
-
-    public char CommandSeparator { get; }
-
-    public char HomeChar { get; }
-
-    public char PathSeparator { get; }
-
-    public char EscapeChar { get; }
-
-    public char SingleQuote { get; }
-
-    public char DoubleQuote { get; }
-
-    public char RedirectChar { get; }
-
-    public char PipeChar { get; }
-
-    public string AppendSeq { get; }
 
 }

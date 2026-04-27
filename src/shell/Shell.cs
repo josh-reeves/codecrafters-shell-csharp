@@ -69,21 +69,29 @@ public class Shell : IShell
     #endregion
 
     #region Methods
+    /// <summary>
+    ///  The main REPL for the shell. This will set the value of ShellIsActive 
+    ///   to true or false depending on whether or not external input is 
+    ///   provided. The loop will execute one time regardless of the value of 
+    ///   ShellIsActive. Subsequent iterations will only take place if 
+    ///   ShellIsActive is equal to true.
+    /// </summary>
+    /// <param name="externalInput">
+    ///  Optional external input for the REPL. When this is provided, the REPL
+    ///   will execute in a sort of "forked" mode: No prompt character will
+    ///   appear, and the REPL will only execute once before the method returns.
+    /// </param>
     public void Run(string? externalInput = null)
     {
-        ShellIsActive = true;
+        ShellIsActive = externalInput == null;
 
-        while (ShellIsActive)
+        do
         {
             try
             {
                 ShellCommand command = new(this);
 
-                if (externalInput is null)
-                {
-                    Console.Write(prompt);
-                    
-                }
+                Console.Write(ShellIsActive ? prompt : string.Empty);
 
                 command.Execute(inputHandler.HandleInput(
                     externalInput ??
@@ -96,7 +104,7 @@ public class Shell : IShell
 
                     foreach(StreamWriter writer in OutWriters)
                     {
-                        writer.Write(output);
+                        writer.WriteLine(output);
 
                     }
 
@@ -108,19 +116,13 @@ public class Shell : IShell
 
                     foreach(StreamWriter writer in ErrWriters)
                     {
-                        writer.Write(error);
-                        
-                    }
+                        writer.WriteLine(error);
+
+                    }    
 
                 }
 
                 Reset();
-
-                if (externalInput is not null)
-                {
-                    return;
-
-                }
 
             }
             catch (Exception ex)
@@ -130,9 +132,16 @@ public class Shell : IShell
             }
 
         }
+        while (ShellIsActive);
 
     }
 
+    /// <summary>
+    /// Resets the shell's state so that it's ready to receive and interpret the
+    ///  next command: Closes and disposes of any open stream writers and their
+    ///  associated pipes. Waits to ensure that all forks of the shell have
+    ///  exited, clears the list of forks and closes any open stream readers.
+    /// </summary>
     private void Reset()
     {
         IList<StreamWriter> writers = OutWriters.Concat(ErrWriters).ToList();
@@ -156,6 +165,15 @@ public class Shell : IShell
 
     }
 
+    /// <summary>
+    ///  Determines whether or not any of a provided list of files is executable.
+    /// </summary>
+    /// <param name="files">
+    ///  An array of strings representing paths of files to check.
+    /// </param>
+    /// <returns>
+    ///  True if any of the provided files are executable. Otherwise false.
+    /// </returns>
     public bool IsExecutable(string[] files)
     {
         foreach(string file in files)
@@ -178,6 +196,19 @@ public class Shell : IShell
     
     }
 
+    /// <summary>
+    ///  Searches for a given file name in a given enumerable of directorys and
+    ///   and return any located instances of the file.
+    /// </summary>
+    /// <param name="file">
+    ///  The file name to search for.
+    /// </param>
+    /// <param name="directories">
+    ///  An enumerable of directories to search.
+    /// </param>
+    /// <returns>
+    ///  A list of directories containing the given file name.
+    /// </returns>
     public IEnumerable<string> Search(string file, IEnumerable<string> directories)
     {
         char dirSep = System.IO.Path.DirectorySeparatorChar;
