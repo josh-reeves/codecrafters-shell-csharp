@@ -4,9 +4,9 @@ using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
 namespace Shell;
 
-/*  The resulting syntax tree sould look like this:
- *      Command: ls -lS | grep "^-" | head -n 3
- *      Tree:
+/* The resulting syntax tree sould look like this:
+ *  Command: ls -lS | grep "^-" | head -n 3
+ *  Tree:
  *                                     ls
  *                                    /  \
  *                                  -lS   |
@@ -21,12 +21,10 @@ namespace Shell;
  *                                    /
  *                                   3
  *  
- *  Commands, arguments and file redirectors go to the left. Pipes go to the
- *   This is somewhat unconventional, but the resulting tree is a good
- *   representation of the original command that can be traversed in a fairly
- *   straight-forward fashion.
- *
- */
+ * Commands, arguments and file redirectors go to the left. Pipes go to 
+ *  the right. This is somewhat unconventional, but the resulting tree is a good
+ *  representation of the original command that can be traversed in a fairly
+ *  straight-forward fashion.*/
 
 static class ParsingMethods
 {

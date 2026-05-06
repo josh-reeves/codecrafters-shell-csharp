@@ -7,14 +7,14 @@ public class Expander : IExpander
     #region Constructor(s)
     public Expander()
     {
-        ExpansionMap = new Dictionary<string, Func<string, IExpansion>>();
+        ExpansionMap = new Dictionary<string, Func<IToken, IToken>>();
         
     }
 
     #endregion
 
     #region Properties
-    public IDictionary<string, Func<string, IExpansion>> ExpansionMap { get; }
+    public IDictionary<string, Func<IToken, IToken>> ExpansionMap { get; }
 
     #endregion
 
@@ -23,9 +23,7 @@ public class Expander : IExpander
     {
         foreach (IToken token in tokens)
         {
-            token.ExpandedValue = token.RawValue;
-
-            token.ExpandedValue = ExpandValue(token.RawValue);
+            token.ExpandedValue = Expand(token).ExpandedValue;
 
         }
         
@@ -33,51 +31,40 @@ public class Expander : IExpander
 
     }
 
-    private string ExpandValue(string input)
+    public IToken Expand(IToken token)
     {
-        string result = string.Empty;
+        token.ExpandedValue = token.RawValue;
 
-        for (int i = 0; i < input.Length; i++)
+        for (int i = 0; i < token.ExpandedValue.Length; i++)
         {
-            if (LookupKey(input[i..]) is string key)
+            string remaining = token.ExpandedValue[i..];
+            IToken? expansion = null;
+
+            foreach (string key in ExpansionMap.Keys)
             {
-                IExpansion expansion = ExpansionMap[input[i..(i + key.Length)]](input[i..input.Length]);
+                if (remaining.StartsWith(key))
+                {
+                    expansion = ExpansionMap[key](token);
 
+                    token.ExpandedValue = token.ExpandedValue.Remove(i, expansion.RawValue.Length).Insert(i, expansion.ExpandedValue);
 
-                result += expansion.Expanded;
-
-                i += expansion.Original.Length - 1;
-
-                continue;
-            
-            }
-
-            result += input[i];
-
-        }
-
-        return result;
+                    remaining = token.ExpandedValue[i..];        
         
-    }
-
-    private string? LookupKey(string input)
-    {
-        for(int i = ExpansionMap.Keys.MaxBy(str => str.Length)?.Length ?? 0; i > 0; i--)
-        {
-            string key = input.Length >= i ? input[0..i] : string.Empty;
-
-            if (ExpansionMap.ContainsKey(key))
+                }
+                
+            }
+        
+            if (expansion is not null)
             {
-                return key;
+                i += (expansion.ExpandedValue.Length - 1 > 0) ? expansion.ExpandedValue.Length - 1 : 0;
 
             }
 
         }
 
-        return null;
-        
-    }
+        return token;
 
+    }
 
     #endregion
 

@@ -103,36 +103,6 @@ public class ShellInputHandler : IInputHandler
     #endregion
 
     #region Structs
-    /// <summary>
-    /// Provides a unified container for items needed to configure the
-    ///  individual components used in the input handling process.
-    /// </summary>
-    public struct InputMap : IInputMap
-    {
-        #region Constructor(s)
-        public InputMap(string sequence, IState? state = null, Func<IToken>? token = null, Func<string, IExpansion>? expansionMethod = null)
-        {
-            Sequence = sequence;
-            State = state;
-            Token = token;
-            ExpansionMethod = expansionMethod;
-            
-        }
-
-        #endregion
-
-        #region Properties
-        public string Sequence { get; } 
-
-        public IState? State { get; }
-
-        public Func<IToken>? Token { get; }
-
-        public Func<string, IExpansion>? ExpansionMethod { get; }
-
-        #endregion
-        
-    }
 
     #endregion
 

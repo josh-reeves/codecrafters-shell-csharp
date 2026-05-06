@@ -1,83 +1,106 @@
-using System;
 using Interfaces;
+using Shell.Extensions.ShellInputHandler.Expander;
+using Shell.Extensions.ShellInputHandler.Lexer;
 
 namespace Shell;
 
-public class ExpansionMethods
+static class ExpansionMethods
 {
-    IShellChars chars;
-
     #region Constructor(s)
-    public ExpansionMethods(IShellChars shellChars)
+    static ExpansionMethods()
     {
-        chars = shellChars;
-
+        Expander = new Expander();
+        
     }
 
     #endregion
 
+    #region Properties
+    public static IExpander Expander { get; set; }
+
+    #endregion
+
     #region Methods
-    public IExpansion ExpandEscape(string input)
-        => new Expansion(input[0..(input.Length >= 3 ? 2 : input.Length)], input.Length >= 2 ? input[1].ToString() : string.Empty);
-
-
-    public IExpansion ExpandSingleQuote(string input)
-    {        
-        int end = input.IndexOf(chars.SingleQuote, 1) >= 1 ? input.IndexOf(chars.SingleQuote, 1) : input.Length;
-        
-        return new Expansion(input[0..(end < input.Length ? end + 1 : end)], input[1..end]);
-
-    }
-
-    public IExpansion ExpandDoubleQuote(string input)
+    public static IToken ExpandEscape(IToken token)
     {
-        int index = 1;
-
-        IExpansion expansion = new Expansion(input, input);
-
-        while (index < expansion.Expanded.Length && expansion.Expanded[index] != chars.DoubleQuote) 
+        ShellToken expansion = new(TokenType.Expansion)
         {
-            index = expansion.Expanded.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], index) >= 0 ? expansion.Expanded.IndexOfAny([chars.DoubleQuote, chars.EscapeChar], index) : expansion.Expanded.Length;
+            RawValue = ShellChars.Escape.Sequence,
+            ExpandedValue = string.Empty
+            
+        };
 
-            if (expansion.Expanded[index >= expansion.Expanded.Length ? index - 1 : index] == chars.EscapeChar)
-            {
-                expansion.Expanded = expansion.Expanded.Remove(index, 1);
-
-                index++;
-
-            };
+        if (token is IShellToken shellToken && shellToken.IsQuoted)
+        {
+            expansion.ExpandedValue = ShellChars.Escape.Sequence;
 
         }
 
-        int offset = input.Length - expansion.Expanded.Length;
+        return expansion;
 
-        expansion.Original = input[0..(index + offset < input.Length ? index + offset + 1 : index + offset)];
-        expansion.Expanded = expansion.Expanded[1..index];
+    }
+
+    public static IToken ExpandNewLine(IToken token)
+    {
+        ShellToken expansion = new(TokenType.Expansion)
+        {
+            RawValue = ShellChars.NewLine.Sequence,
+            ExpandedValue = "\n"
+            
+        };
+
+        return expansion;
+
+    }
+
+    public static IToken ExpandSingleQuote(IToken token)
+    {
+        string input = token.RawValue;
+        char quoteChar = input[0];        
+        int end = input.IndexOf(quoteChar, 1) >= 1 ? input.IndexOf(quoteChar, 1) : input.Length;
+
+        ShellToken expansion = new(TokenType.Expansion)
+        {
+            RawValue = input[0..(end < input.Length ? end + 1 : end)],
+            ExpandedValue = input[1..end]
+            
+        };
+        
+        return expansion;
+
+    }
+
+    public static IToken ExpandDoubleQuote(IToken token)
+    {   
+        IShellToken expansion = (IShellToken)ExpandSingleQuote(token);
+        IShellToken temp = new ShellToken(TokenType.Expansion)
+        {
+            RawValue = expansion.ExpandedValue,
+            IsQuoted = true
+            
+        };
+
+        Expander.Expand(new Queue<IToken>([temp]));
+
+        expansion.ExpandedValue = temp.ExpandedValue;
 
         return expansion;
 
     } 
 
-    #endregion
-    
-    #region Structs
-    public struct Expansion : IExpansion
+    public static IToken ExpandHome(IToken token)
     {
-        public Expansion(string original, string expansion)
+        ShellToken expansion = new(TokenType.Expansion)
         {
-            Original = original;
-            Expanded = expansion;
+            RawValue = ShellChars.Home.Sequence,
+            ExpandedValue = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
             
-        }
+        };
 
-        #region Properties
-        public string Original { get; set; }
-
-        public string Expanded { get; set; }
-
-        #endregion
+        return expansion;
 
     }
 
     #endregion
+
 }

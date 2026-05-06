@@ -7,6 +7,7 @@ public class ShellToken : IShellToken
     #region Constructor(s)
     public ShellToken(TokenType type)
     {
+        IsQuoted = false;
         RawValue = string.Empty;
         ExpandedValue = string.Empty;
         Type = type;
@@ -16,6 +17,8 @@ public class ShellToken : IShellToken
     #endregion
 
     #region Properties
+    public bool IsQuoted { get; set; }
+
     public int Position { get; set; }
 
     public string RawValue { get; set; }

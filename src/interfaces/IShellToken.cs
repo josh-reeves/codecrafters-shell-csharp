@@ -8,13 +8,16 @@ public enum TokenType
     AppendStdOut,
     AppendStdErr,
     Filename,
-    Pipe
+    Pipe,
+    Expansion
 
 }
 
 public interface IShellToken : IToken
 {
     #region Properties
+    public bool IsQuoted { get; set; }
+    
     public TokenType Type { get; }
 
     #endregion
