@@ -41,8 +41,7 @@ public class ShellCommand : IShellCommand
 {
     #region Fields
     private string command,
-                   standardOutput,
-                   standardError;
+                   stdOut;
 
     private IList<string> arguments;
 
@@ -52,8 +51,8 @@ public class ShellCommand : IShellCommand
     public ShellCommand(IShell shell)
     {
         command = string.Empty;
-        standardOutput = string.Empty;
-        standardError = string.Empty;
+        stdOut = string.Empty;
+        StandardError = string.Empty;
 
         arguments = new List<string>();
 
@@ -78,32 +77,31 @@ public class ShellCommand : IShellCommand
 
     public string StandardOutput
     {
-        get
-        {
-            string value = standardOutput;
-            standardOutput = string.Empty;
+        get => stdOut;
 
-            return value;
-        
+        set
+        {
+            if (IsStdOutRedirected)
+            {
+                foreach(StreamWriter writer in Shell.OutWriters)
+                {
+                    writer.WriteLine(value);
+
+                }    
+
+                Console.WriteLine($"[DEBUG] Redirecting stdout ({value}) to {Shell.OutWriters.Count} stream writer(s).");
+
+                return;
+
+            }
+
+            stdOut = value;
+
         }
 
-        set => standardOutput = value;
-    
     }
 
-    public string StandardError
-    {
-        get
-        {
-            string value = standardError;
-            standardError = string.Empty;
-
-            return value;
-        }
-
-        set => standardError = value;
-
-    }
+    public string StandardError { get; set; }
 
     #endregion
 
@@ -140,16 +138,14 @@ public class ShellCommand : IShellCommand
 
         }
 
-        Process? process = null;
-
         if (Shell.Builtins.ContainsKey(command))
         {
-            IShellCommand builtin = Shell.Builtins[command];
+            IShellCommand builtin = Shell.Builtins[command].Invoke();
 
             builtin.IsStdOutRedirected = IsStdOutRedirected;
             builtin.IsStdErrRedirected = IsStdErrRedirected;
             
-            Shell.Builtins[command].Execute(arguments.ToArray());
+            builtin.Execute(arguments.ToArray());
 
             StandardOutput = builtin.StandardOutput;
             StandardError = builtin.StandardError;
@@ -160,26 +156,41 @@ public class ShellCommand : IShellCommand
 
         if (Shell.IsExecutable([..Shell.Search(command, Shell.PathList)]))
         {
-            process = ExecuteExternal(command, [..arguments]);
+            Process process = ExecuteExternal(command, [..arguments]);
 
             DataReceivedEventHandler outHandler = new DataReceivedEventHandler(
-                (sender, e) => StandardOutput += e.Data),
-                                     errHandler = new DataReceivedEventHandler(
-                (sender, e) => StandardError += e.Data);
+                (sender, e) => 
+                {
+                    Console.WriteLine($"[DEBUG] {command} writing {e.Data} to standard output.");
 
-            if (IsStdOutRedirected)
+                    StandardOutput += e.Data;
+
+                }),
+                                    errHandler = new DataReceivedEventHandler(
+                (sender, e) => 
+                {                    
+                    Console.WriteLine($"[DEBUG] {command} writing {e.Data} to standard error.");
+
+                    StandardError += e.Data;
+                    
+                });
+        
+
+            if (process.StartInfo.RedirectStandardOutput)
             {
                 process.OutputDataReceived += outHandler;
                 process.BeginOutputReadLine();
 
             }
 
-            if (IsStdErrRedirected)
+            if (process.StartInfo.RedirectStandardError)
             {
                 process.ErrorDataReceived += errHandler;
                 process.BeginErrorReadLine();
-                
+
             }
+
+            process.WaitForExit();
 
             return;
             
@@ -301,15 +312,22 @@ public class ShellCommand : IShellCommand
                 
             }  
 
-            /* Remove the command node from the tree so that it isn't processed
-             *  twice. Do this before forking the shell in the even that the
-             *  forked shell runs indefinitely :*/
+            IsStdOutRedirected = true;
+
+            Console.WriteLine($"[DEBUG] IsStdOutRedirected updated: {IsStdOutRedirected}");
+
             node.RemoveChild(child);
+
+            Console.WriteLine($"[DEBUG] Child node '{RestoreCommand(child)}' removed");
 
             AnonymousPipeServerStream stream = new(
                 PipeDirection.Out, 
                 HandleInheritability.Inheritable);
-      
+
+            Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
+
+            Console.WriteLine($"[DEBUG] StreamWriter added");
+
             Process process = ExecuteExternal(
                 "codecrafters-shell",
                 [
@@ -320,12 +338,13 @@ public class ShellCommand : IShellCommand
                 ],
                 new ProcessStartInfo() { UseShellExecute = false });
 
-            Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
-
             stream.DisposeLocalCopyOfClientHandle();
 
-            IsStdOutRedirected = true;
+            Console.WriteLine($"[DEBUG] StreamWriter LocalHandler disposed of.");
 
+            Shell.Forks.Add(process);
+
+            Console.WriteLine($"[DEBUG] Fork '{RestoreCommand(child)}' added");
         }
         catch (Exception ex)
         {
@@ -336,22 +355,22 @@ public class ShellCommand : IShellCommand
     }
 
     /// <summary>
-    ///     Execute a command that isn't built into the shell.
+    ///  Execute a command that isn't built into the shell.
     /// </summary>
     /// <param name="command">
-    ///     The command to execute.
+    ///  The command to execute.
     /// </param>
     /// <param name="args">
-    ///     The arguments to supply to the command.
+    ///  The arguments to supply to the command.
     /// </param>
     /// <param name="startInfo">
-    ///     Optional override for the default start info 
-    ///     provided by the method. If a filename is included, it will override the
-    ///     supplied command. Otherwise the supplied command will be executed with
-    ///     the provided start info.
+    ///  Optional override for the default start info 
+    ///  provided by the method. If a filename is included, it will override the
+    ///  supplied command. Otherwise the supplied command will be executed with
+    ///  the provided start info.
     /// </param>
     /// <returns>
-    ///     The process object created and started by the method.
+    ///  The process object created and started by the method.
     /// </returns>
     private Process ExecuteExternal(string command, string[] args, ProcessStartInfo? startInfo = null)
     {
@@ -386,22 +405,27 @@ public class ShellCommand : IShellCommand
 
         }
 
+        Console.WriteLine($"[DEBUG] Starting command {command}. IsStdOutRedirected? {process.StartInfo.RedirectStandardOutput}");
+
         process.Start();
 
-        Shell.Forks.Add(process);
-
-        if (IsStdInRedirected)
+        if (process.StartInfo.RedirectStandardInput)
         {
-            string? msg = Shell.InReader?.ReadLine();
 
-            if (msg is not null)
+            string? msg;
+            Console.WriteLine($"[DEBUG] {command}: Ready for input.");
+            while ((msg = Shell.InReader?.ReadLine()) is not null)
             {
                 process.StandardInput.WriteLine(msg);
+
+                Console.WriteLine($"[DEBUG] Writing to stdin of {command}: {msg}");   
 
             }
 
             process.StandardInput.Close();
-       
+
+            Console.WriteLine($"[DEBUG] Input stream of {command} closed after reading {(msg is null ? "null" : msg)}");
+        
         }
 
         return process;

@@ -27,14 +27,14 @@ public class Shell : IShell
         CommandSeparator = commandSeparator;
         inputHandler = shellInputHandler;
 
-        Builtins = new Dictionary<string, IShellCommand>()
+        Builtins = new Dictionary<string, Func<IShellCommand>>()
         {
-            {"echo", new Echo(this)},
-            {"pwd", new PrintWorkingDirectory(this)},
-            {"cd", new ChangeDirectory(this)},
-            {"exit", new Exit(this)},
-            {"type", new Type(this)}
-       
+            {"echo", () => new Echo(this)},
+            {"pwd", () => new PrintWorkingDirectory(this)},
+            {"cd", () => new ChangeDirectory(this)},
+            {"exit", () => new Exit(this)},
+            {"type", () => new Type(this)}
+        
         };
 
     }
@@ -64,7 +64,7 @@ public class Shell : IShell
 
     public IList<StreamWriter> ErrWriters { get; set; }
 
-    public IDictionary<string, IShellCommand> Builtins { get; private set; }
+    public IDictionary<string, Func<IShellCommand>> Builtins { get; private set; }
 
     #endregion
 
@@ -98,25 +98,11 @@ public class Shell : IShell
                     Console.ReadLine() ?? 
                     string.Empty).Root);
 
-                if (command.IsStdOutRedirected)
-                {
-                    string output = command.StandardOutput;
-
-                    foreach(StreamWriter writer in OutWriters)
-                    {
-                        writer.WriteLine(output);
-
-                    }
-
-                }
-
                 if (command.IsStdErrRedirected)
                 {
-                    string error = command.StandardError;
-
                     foreach(StreamWriter writer in ErrWriters)
                     {
-                        writer.WriteLine(error);
+                        writer.WriteLine(command.StandardError);
 
                     }    
 
@@ -159,6 +145,7 @@ public class Shell : IShell
         }
 
         InReader?.Dispose();
+
         Forks.Clear();
         OutWriters.Clear();
         ErrWriters.Clear();

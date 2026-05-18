@@ -25,7 +25,7 @@ public interface IShell
     
     public IList<StreamWriter> ErrWriters { get; }
 
-    public IDictionary<string, IShellCommand> Builtins { get; }
+    public IDictionary<string, Func<IShellCommand>> Builtins { get; }
 
     #endregion
 
