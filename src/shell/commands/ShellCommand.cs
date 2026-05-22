@@ -40,8 +40,10 @@ namespace Shell.Commands;
 public class ShellCommand : IShellCommand
 {
     #region Fields
-    private string command,
-                   stdOut;
+    private string command;
+
+    private DataReceivedEventHandler outHandler,
+                                     errHandler;
 
     private IList<string> arguments;
 
@@ -51,7 +53,7 @@ public class ShellCommand : IShellCommand
     public ShellCommand(IShell shell)
     {
         command = string.Empty;
-        stdOut = string.Empty;
+        StandardOutput = string.Empty;
         StandardError = string.Empty;
 
         arguments = new List<string>();
@@ -60,7 +62,34 @@ public class ShellCommand : IShellCommand
 
         Shell = shell;
 
+        outHandler = new((sender, e) => 
+        {
+            Console.WriteLine($"[DEBUG] {command} writing {e.Data} to standard output.");
+
+            OutputDataReceived?.Invoke(this, e.Data ?? string.Empty);
+
+            StandardOutput += e.Data;
+
+        });
+        
+        errHandler = new((sender, e) => 
+        {                    
+            Console.WriteLine($"[DEBUG] {command} writing {e.Data} to standard error.");
+
+            ErrorDataReceived?.Invoke(this, e.Data ?? string.Empty);
+
+            StandardError += e.Data;
+            
+        });
+
     }
+
+    #endregion
+
+    #region Events
+    public event EventHandler<string>? OutputDataReceived;
+
+    public event EventHandler<string>? ErrorDataReceived;
 
     #endregion
 
@@ -75,31 +104,7 @@ public class ShellCommand : IShellCommand
 
     public string InvalidCmdMsg { get; set; }
 
-    public string StandardOutput
-    {
-        get => stdOut;
-
-        set
-        {
-            if (IsStdOutRedirected)
-            {
-                foreach(StreamWriter writer in Shell.OutWriters)
-                {
-                    writer.WriteLine(value);
-
-                }    
-
-                Console.WriteLine($"[DEBUG] Redirecting stdout ({value}) to {Shell.OutWriters.Count} stream writer(s).");
-
-                return;
-
-            }
-
-            stdOut = value;
-
-        }
-
-    }
+    public string StandardOutput { get; set; }
 
     public string StandardError { get; set; }
 
@@ -150,6 +155,8 @@ public class ShellCommand : IShellCommand
             StandardOutput = builtin.StandardOutput;
             StandardError = builtin.StandardError;
 
+            OutputDataReceived?.Invoke(this, StandardOutput);
+
             return;   
 
         }
@@ -158,39 +165,10 @@ public class ShellCommand : IShellCommand
         {
             Process process = ExecuteExternal(command, [..arguments]);
 
-            DataReceivedEventHandler outHandler = new DataReceivedEventHandler(
-                (sender, e) => 
-                {
-                    Console.WriteLine($"[DEBUG] {command} writing {e.Data} to standard output.");
-
-                    StandardOutput += e.Data;
-
-                }),
-                                    errHandler = new DataReceivedEventHandler(
-                (sender, e) => 
-                {                    
-                    Console.WriteLine($"[DEBUG] {command} writing {e.Data} to standard error.");
-
-                    StandardError += e.Data;
-                    
-                });
-        
-
-            if (process.StartInfo.RedirectStandardOutput)
-            {
-                process.OutputDataReceived += outHandler;
-                process.BeginOutputReadLine();
-
-            }
-
-            if (process.StartInfo.RedirectStandardError)
-            {
-                process.ErrorDataReceived += errHandler;
-                process.BeginErrorReadLine();
-
-            }
-
             process.WaitForExit();
+
+            process.OutputDataReceived -= outHandler;
+            process.ErrorDataReceived -= errHandler;
 
             return;
             
@@ -314,7 +292,7 @@ public class ShellCommand : IShellCommand
 
             IsStdOutRedirected = true;
 
-            Console.WriteLine($"[DEBUG] IsStdOutRedirected updated: {IsStdOutRedirected}");
+            Console.WriteLine($"[DEBUG] {command} redirected to pipe. IsStdOutRedirected: {IsStdOutRedirected}");
 
             node.RemoveChild(child);
 
@@ -324,7 +302,7 @@ public class ShellCommand : IShellCommand
                 PipeDirection.Out, 
                 HandleInheritability.Inheritable);
 
-            Shell.OutWriters.Add(new StreamWriter(stream) { AutoFlush = true});
+            Shell.OutWriters.Add(new StreamWriter(stream) {AutoFlush = true});
 
             Console.WriteLine($"[DEBUG] StreamWriter added");
 
@@ -409,12 +387,27 @@ public class ShellCommand : IShellCommand
 
         process.Start();
 
+        if (process.StartInfo.RedirectStandardOutput)
+        {
+            process.OutputDataReceived += outHandler;
+            process.BeginOutputReadLine();
+
+        }
+
+        if (process.StartInfo.RedirectStandardError)
+        {
+            process.ErrorDataReceived += errHandler;
+            process.BeginErrorReadLine();
+
+        }
+
         if (process.StartInfo.RedirectStandardInput)
         {
-
             string? msg;
+            
             Console.WriteLine($"[DEBUG] {command}: Ready for input.");
-            while ((msg = Shell.InReader?.ReadLine()) is not null)
+
+            while (!string.IsNullOrWhiteSpace(msg = Shell.InReader?.ReadLine()))
             {
                 process.StandardInput.WriteLine(msg);
 
@@ -423,6 +416,15 @@ public class ShellCommand : IShellCommand
             }
 
             process.StandardInput.Close();
+
+            msg = msg switch
+            {
+                null => "null",
+                "" => "empty",
+                " " => "whitespace",
+                _ => "unknown sequence"
+
+            };
 
             Console.WriteLine($"[DEBUG] Input stream of {command} closed after reading {(msg is null ? "null" : msg)}");
         

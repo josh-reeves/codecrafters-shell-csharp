@@ -91,6 +91,41 @@ public class Shell : IShell
             {
                 ShellCommand command = new(this);
 
+                EventHandler<string> outHandler = new((sender, msg) =>
+                {
+                    if (command.IsStdOutRedirected)
+                    {
+                        foreach(StreamWriter writer in OutWriters)
+                        {
+                            writer.WriteLine(msg);
+
+                        }    
+
+                        Console.WriteLine($"[DEBUG] Redirecting stdout ({msg}) to {OutWriters.Count} stream writer(s).");
+
+                    }
+
+                });
+                
+                EventHandler<string> errHandler = new((sender, msg) =>
+                {
+                    if (command.IsStdErrRedirected)
+                    {
+                        foreach(StreamWriter writer in ErrWriters)
+                        {
+                            writer.WriteLine(command.StandardError);
+
+                        }    
+
+                        Console.WriteLine($"[DEBUG] Redirecting stdout ({command.StandardError}) to {ErrWriters.Count} stream writer(s).");
+
+                    }
+
+                });
+
+                command.OutputDataReceived += outHandler;
+                command.ErrorDataReceived += errHandler;
+
                 Console.Write(ShellIsActive ? prompt : string.Empty);
 
                 command.Execute(inputHandler.HandleInput(
@@ -98,15 +133,6 @@ public class Shell : IShell
                     Console.ReadLine() ?? 
                     string.Empty).Root);
 
-                if (command.IsStdErrRedirected)
-                {
-                    foreach(StreamWriter writer in ErrWriters)
-                    {
-                        writer.WriteLine(command.StandardError);
-
-                    }    
-
-                }
 
                 Reset();
 
