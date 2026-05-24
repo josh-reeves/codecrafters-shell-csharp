@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.IO.Pipelines;
+using System.Threading.Tasks;
 using Interfaces;
 using Shell.Commands;
 using Type = Shell.Commands.Type;
@@ -81,7 +83,7 @@ public class Shell : IShell
     ///   will execute in a sort of "forked" mode: No prompt character will
     ///   appear, and the REPL will only execute once before the method returns.
     /// </param>
-    public void Run(string? externalInput = null)
+    public async Task Run(string? externalInput = null)
     {
         ShellIsActive = externalInput == null;
 
@@ -91,41 +93,6 @@ public class Shell : IShell
             {
                 ShellCommand command = new(this);
 
-                EventHandler<string> outHandler = new((sender, msg) =>
-                {
-                    if (command.IsStdOutRedirected)
-                    {
-                        foreach(StreamWriter writer in OutWriters)
-                        {
-                            writer.WriteLine(msg);
-
-                        }    
-
-                        Console.WriteLine($"[DEBUG] Redirecting stdout ({msg}) to {OutWriters.Count} stream writer(s).");
-
-                    }
-
-                });
-                
-                EventHandler<string> errHandler = new((sender, msg) =>
-                {
-                    if (command.IsStdErrRedirected)
-                    {
-                        foreach(StreamWriter writer in ErrWriters)
-                        {
-                            writer.WriteLine(command.StandardError);
-
-                        }    
-
-                        Console.WriteLine($"[DEBUG] Redirecting stdout ({command.StandardError}) to {ErrWriters.Count} stream writer(s).");
-
-                    }
-
-                });
-
-                command.OutputDataReceived += outHandler;
-                command.ErrorDataReceived += errHandler;
-
                 Console.Write(ShellIsActive ? prompt : string.Empty);
 
                 command.Execute(inputHandler.HandleInput(
@@ -133,6 +100,17 @@ public class Shell : IShell
                     Console.ReadLine() ?? 
                     string.Empty).Root);
 
+                if (command.IsStdOutRedirected)
+                {
+                    await RedirectStream(command.StandardOutput, OutWriters);
+
+                }
+
+                if (command.IsStdErrRedirected)
+                {
+                    await RedirectStream(command.StandardError, OutWriters);
+
+                }
 
                 Reset();
 
@@ -145,6 +123,22 @@ public class Shell : IShell
 
         }
         while (ShellIsActive);
+
+    }
+
+    private async Task RedirectStream(StreamReader reader, IEnumerable<StreamWriter> writers)
+    {
+        string? msg;
+
+        while ((msg = await reader.ReadLineAsync()) is not null)
+        {
+            foreach (StreamWriter writer in writers)
+            {
+                await writer.WriteLineAsync(msg);
+
+            }
+            
+        }
 
     }
 
@@ -161,6 +155,7 @@ public class Shell : IShell
         foreach (StreamWriter writer in writers)
         {
             writer.Close();
+            writer.Dispose();
 
         }
 
@@ -175,6 +170,8 @@ public class Shell : IShell
         Forks.Clear();
         OutWriters.Clear();
         ErrWriters.Clear();
+
+        Pipe pipe = new(PipeOptions.Default);
 
     }
 

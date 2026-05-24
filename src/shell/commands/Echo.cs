@@ -20,13 +20,15 @@ public class Echo : ShellCommand
 
         IList<string> argList = args as IList<string> ?? [];
 
+        string output = string.Empty;
+
         for (int i = 0; i < argList.Count; i++)
         {
-            StandardOutput += argList[i];
+            output += argList[i];
 
             if (i < argList.Count - 1)
             {
-                StandardOutput += Shell.CommandSeparator;
+                output += Shell.CommandSeparator;
 
             }
             
@@ -34,11 +36,13 @@ public class Echo : ShellCommand
 
         if (IsStdOutRedirected)
         {
+            StandardOutput = StreamReaderFromString(output);
+
             return;
 
         }
 
-        Console.WriteLine(StandardOutput);
+        Console.WriteLine(output);
 
     }
     

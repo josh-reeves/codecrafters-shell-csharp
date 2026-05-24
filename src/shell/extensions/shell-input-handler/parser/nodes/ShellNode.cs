@@ -110,14 +110,12 @@ public class ShellNode : IShellNode
 
         if (LeftChild == child)
         {
-            // Console.WriteLine($"[DEBUG] Removing child: {((IShellNode)LeftChild).Data.RawValue}");
             LeftChild = null;
 
         }
 
         if (RightChild == child)
         {
-            // Console.WriteLine($"[DEBUG] Removing child: {((IShellNode)RightChild).Data.RawValue}");
             RightChild = null;
             
         }

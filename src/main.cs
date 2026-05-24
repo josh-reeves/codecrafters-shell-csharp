@@ -1,4 +1,5 @@
 using System.IO.Pipes;
+using System.Threading.Tasks;
 using Interfaces;
 using Shell.Extensions.ShellInputHandler;
 using Shell.Extensions.ShellInputHandler.Expander;
@@ -82,7 +83,7 @@ static class ShellChars
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         string? command = null,
                 streamHandle = null;
@@ -139,11 +140,11 @@ class Program
 
         Shell shell = new("$ ", "PATH", ShellChars.Command.Sequence[0], inputHandler)
         {
-            InReader = streamHandle is not null ? new StreamReader(new AnonymousPipeClientStream(PipeDirection.In, streamHandle)) : null
+            InReader = streamHandle is not null ? new StreamReader(new AnonymousPipeClientStream(PipeDirection.In, streamHandle)): null
 
         };
 
-        shell.Run(command);
+        await shell.Run(command);
 
     }
 

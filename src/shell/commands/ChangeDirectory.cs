@@ -17,7 +17,8 @@ public class ChangeDirectory : ShellCommand
     #region Methods
     public override void Execute(object? args)
     {
-        string dir = (args as string[])?.Length > 0 ? ((string[])args)[0] : string.Empty;
+        string dir = (args as string[])?.Length > 0 ? ((string[])args)[0] : string.Empty,
+               err = string.Empty;
         
         if (string.IsNullOrEmpty(dir))
         {
@@ -33,15 +34,17 @@ public class ChangeDirectory : ShellCommand
 
         }
 
-        StandardError += dir + invalidDirMsg;
+        err += dir + invalidDirMsg;
 
         if (IsStdErrRedirected)
         {
+            StandardOutput = StreamReaderFromString(err);
+
             return;
 
         }
 
-        Console.WriteLine(StandardError);
+        Console.WriteLine(err);
 
     }
 

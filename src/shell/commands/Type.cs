@@ -17,7 +17,9 @@ public class Type : ShellCommand
 
     #region Methods
     public override void Execute(object? args)
-    {        
+    {   
+        string output = string.Empty;
+
         if (args is null)
         {
             return;
@@ -40,17 +42,19 @@ public class Type : ShellCommand
                 
             }
 
-            StandardOutput += result;
+            output += result;
 
         }
 
         if (IsStdOutRedirected)
         {
+            StandardOutput = StreamReaderFromString(output);
+            
             return;
 
         }
 
-        Console.Write(StandardOutput);
+        Console.Write(output);
 
     }
 

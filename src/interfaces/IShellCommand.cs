@@ -9,9 +9,9 @@ public interface IShellCommand
 
     public bool IsStdErrRedirected { get; set; }
 
-    public string StandardOutput { get; }
+    public StreamReader StandardOutput { get; }
 
-    public string StandardError { get; }
+    public StreamReader StandardError { get; }
 
     #endregion
 

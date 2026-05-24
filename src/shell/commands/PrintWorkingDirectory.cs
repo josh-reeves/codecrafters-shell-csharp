@@ -12,15 +12,17 @@ public class PrintWorkingDirectory : ShellCommand
     #region Methods
     public override void Execute(object? args = null)
     {
-        StandardOutput += Directory.GetCurrentDirectory();
+        string output = Directory.GetCurrentDirectory();
 
         if (IsStdOutRedirected)
         {
+            StandardOutput = StreamReaderFromString(output);
+            
             return;
 
         }
         
-        Console.WriteLine(StandardOutput);
+        Console.WriteLine(output);
 
     }
 

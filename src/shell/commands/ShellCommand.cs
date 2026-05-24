@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Text;
 using Interfaces;
 
 namespace Shell.Commands;
@@ -42,9 +43,6 @@ public class ShellCommand : IShellCommand
     #region Fields
     private string command;
 
-    private DataReceivedEventHandler outHandler,
-                                     errHandler;
-
     private IList<string> arguments;
 
     #endregion
@@ -53,43 +51,17 @@ public class ShellCommand : IShellCommand
     public ShellCommand(IShell shell)
     {
         command = string.Empty;
-        StandardOutput = string.Empty;
-        StandardError = string.Empty;
 
         arguments = new List<string>();
 
         InvalidCmdMsg = ": command not found";
 
+        StandardOutput = StreamReader.Null;
+        StandardError = StreamReader.Null;
+
         Shell = shell;
 
-        outHandler = new((sender, e) => 
-        {
-            Console.WriteLine($"[DEBUG] {command} writing {e.Data} to standard output.");
-
-            OutputDataReceived?.Invoke(this, e.Data ?? string.Empty);
-
-            StandardOutput += e.Data;
-
-        });
-        
-        errHandler = new((sender, e) => 
-        {                    
-            Console.WriteLine($"[DEBUG] {command} writing {e.Data} to standard error.");
-
-            ErrorDataReceived?.Invoke(this, e.Data ?? string.Empty);
-
-            StandardError += e.Data;
-            
-        });
-
     }
-
-    #endregion
-
-    #region Events
-    public event EventHandler<string>? OutputDataReceived;
-
-    public event EventHandler<string>? ErrorDataReceived;
 
     #endregion
 
@@ -104,9 +76,9 @@ public class ShellCommand : IShellCommand
 
     public string InvalidCmdMsg { get; set; }
 
-    public string StandardOutput { get; set; }
+    public StreamReader StandardOutput { get; internal set; }
 
-    public string StandardError { get; set; }
+    public StreamReader StandardError { get; internal set; }
 
     #endregion
 
@@ -155,26 +127,39 @@ public class ShellCommand : IShellCommand
             StandardOutput = builtin.StandardOutput;
             StandardError = builtin.StandardError;
 
-            OutputDataReceived?.Invoke(this, StandardOutput);
-
             return;   
 
         }
 
         if (Shell.IsExecutable([..Shell.Search(command, Shell.PathList)]))
         {
-            Process process = ExecuteExternal(command, [..arguments]);
+            ExecuteExternal(new ProcessStartInfo(command, arguments)
+            {
+                FileName = command,
+                UseShellExecute = 
+                    !IsStdInRedirected &&
+                    !IsStdOutRedirected &&
+                    !IsStdErrRedirected,
+                RedirectStandardOutput = IsStdOutRedirected,
+                RedirectStandardError = IsStdErrRedirected,
+                RedirectStandardInput = IsStdInRedirected,
 
-            process.WaitForExit();
-
-            process.OutputDataReceived -= outHandler;
-            process.ErrorDataReceived -= errHandler;
+            });
 
             return;
             
         }
 
         Console.WriteLine(command + InvalidCmdMsg);
+        
+    }
+
+    internal StreamReader StreamReaderFromString(string input)
+    {
+        MemoryStream stream = new(Encoding.UTF8.GetBytes(input));
+        StreamReader reader = new(stream);
+
+        return reader;
         
     }
 
@@ -292,11 +277,7 @@ public class ShellCommand : IShellCommand
 
             IsStdOutRedirected = true;
 
-            Console.WriteLine($"[DEBUG] {command} redirected to pipe. IsStdOutRedirected: {IsStdOutRedirected}");
-
             node.RemoveChild(child);
-
-            Console.WriteLine($"[DEBUG] Child node '{RestoreCommand(child)}' removed");
 
             AnonymousPipeServerStream stream = new(
                 PipeDirection.Out, 
@@ -304,25 +285,13 @@ public class ShellCommand : IShellCommand
 
             Shell.OutWriters.Add(new StreamWriter(stream) {AutoFlush = true});
 
-            Console.WriteLine($"[DEBUG] StreamWriter added");
-
-            Process process = ExecuteExternal(
-                "codecrafters-shell",
-                [
-                    RestoreCommand(child),
-                    "-i",
-                    stream.GetClientHandleAsString()
-                    
-                ],
-                new ProcessStartInfo() { UseShellExecute = false });
+            ExecuteExternal(new ProcessStartInfo("codecrafters-shell",
+                [ RestoreCommand(child),
+                  "-i",
+                  stream.GetClientHandleAsString() ])); 
 
             stream.DisposeLocalCopyOfClientHandle();
 
-            Console.WriteLine($"[DEBUG] StreamWriter LocalHandler disposed of.");
-
-            Shell.Forks.Add(process);
-
-            Console.WriteLine($"[DEBUG] Fork '{RestoreCommand(child)}' added");
         }
         catch (Exception ex)
         {
@@ -350,87 +319,33 @@ public class ShellCommand : IShellCommand
     /// <returns>
     ///  The process object created and started by the method.
     /// </returns>
-    private Process ExecuteExternal(string command, string[] args, ProcessStartInfo? startInfo = null)
+    private void ExecuteExternal(ProcessStartInfo startInfo)
     {
-        Process process = new()
-        {
-            StartInfo = new ProcessStartInfo()
-            {
-                FileName = command,
-                UseShellExecute = 
-                    !IsStdInRedirected &&
-                    !IsStdOutRedirected &&
-                    !IsStdErrRedirected,
-                RedirectStandardOutput = IsStdOutRedirected,
-                RedirectStandardError = IsStdErrRedirected,
-                RedirectStandardInput = IsStdInRedirected,
-
-            }
-            
-        };
-
-        process.StartInfo = startInfo ?? process.StartInfo;
-
-        if (string.IsNullOrWhiteSpace(process.StartInfo.FileName))
-        {
-            process.StartInfo.FileName = command;
-
-        }
-
-        foreach (string arg in args)
-        {
-            process.StartInfo.ArgumentList.Add(arg);
-
-        }
-
-        Console.WriteLine($"[DEBUG] Starting command {command}. IsStdOutRedirected? {process.StartInfo.RedirectStandardOutput}");
+        Process process = new() { StartInfo = startInfo};
 
         process.Start();
 
+        Shell.Forks.Add(process);
+
         if (process.StartInfo.RedirectStandardOutput)
         {
-            process.OutputDataReceived += outHandler;
-            process.BeginOutputReadLine();
+            StandardOutput = process.StandardOutput;
 
         }
 
         if (process.StartInfo.RedirectStandardError)
         {
-            process.ErrorDataReceived += errHandler;
-            process.BeginErrorReadLine();
+            StandardError = process.StandardError;
 
         }
 
         if (process.StartInfo.RedirectStandardInput)
         {
-            string? msg;
+            Shell.InReader?.BaseStream.CopyToAsync(process.StandardInput.BaseStream);
             
-            Console.WriteLine($"[DEBUG] {command}: Ready for input.");
-
-            while (!string.IsNullOrWhiteSpace(msg = Shell.InReader?.ReadLine()))
-            {
-                process.StandardInput.WriteLine(msg);
-
-                Console.WriteLine($"[DEBUG] Writing to stdin of {command}: {msg}");   
-
-            }
-
             process.StandardInput.Close();
 
-            msg = msg switch
-            {
-                null => "null",
-                "" => "empty",
-                " " => "whitespace",
-                _ => "unknown sequence"
-
-            };
-
-            Console.WriteLine($"[DEBUG] Input stream of {command} closed after reading {(msg is null ? "null" : msg)}");
-        
         }
-
-        return process;
 
     }
 

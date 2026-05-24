@@ -30,7 +30,7 @@ public interface IShell
     #endregion
 
     #region Methods
-    public void Run(string? externalInput);
+    public Task Run(string? externalInput);
 
     public bool IsExecutable(string[] files);
 
