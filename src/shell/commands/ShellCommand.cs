@@ -135,12 +135,11 @@ public class ShellCommand : IShellCommand
         {
             ExecuteExternal(new ProcessStartInfo(command, arguments)
             {
-                FileName = command,
                 UseShellExecute = 
                     !IsStdInRedirected &&
                     !IsStdOutRedirected &&
                     !IsStdErrRedirected,
-                RedirectStandardOutput = IsStdOutRedirected,
+                RedirectStandardOutput = IsStdOutRedirected || IsStdInRedirected,
                 RedirectStandardError = IsStdErrRedirected,
                 RedirectStandardInput = IsStdInRedirected,
 
@@ -304,21 +303,9 @@ public class ShellCommand : IShellCommand
     /// <summary>
     ///  Execute a command that isn't built into the shell.
     /// </summary>
-    /// <param name="command">
-    ///  The command to execute.
-    /// </param>
-    /// <param name="args">
-    ///  The arguments to supply to the command.
-    /// </param>
     /// <param name="startInfo">
-    ///  Optional override for the default start info 
-    ///  provided by the method. If a filename is included, it will override the
-    ///  supplied command. Otherwise the supplied command will be executed with
-    ///  the provided start info.
     /// </param>
-    /// <returns>
-    ///  The process object created and started by the method.
-    /// </returns>
+    /// 
     private void ExecuteExternal(ProcessStartInfo startInfo)
     {
         Process process = new() { StartInfo = startInfo};
@@ -341,8 +328,14 @@ public class ShellCommand : IShellCommand
 
         if (process.StartInfo.RedirectStandardInput)
         {
-            Shell.InReader?.BaseStream.CopyToAsync(process.StandardInput.BaseStream);
-            
+            while (Shell.InReader?.ReadLine() is string input)
+            {
+                process.StandardInput.WriteLine(input);
+
+                Console.WriteLine($"[DEBUG] Writing to stdin of {process.StartInfo.FileName}: {input}");
+
+            }
+
             process.StandardInput.Close();
 
         }

@@ -112,14 +112,14 @@ public class Shell : IShell
 
                 }
 
-                Reset();
-
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                Console.WriteLine($"[DEBUG] EXCEPTION:{ex.Message}");
 
             }
+
+            Reset();
 
         }
         while (ShellIsActive);
@@ -128,13 +128,11 @@ public class Shell : IShell
 
     private async Task RedirectStream(StreamReader reader, IEnumerable<StreamWriter> writers)
     {
-        string? msg;
-
-        while ((msg = await reader.ReadLineAsync()) is not null)
+        while (await reader.ReadLineAsync() is string output)
         {
             foreach (StreamWriter writer in writers)
             {
-                await writer.WriteLineAsync(msg);
+                await writer.WriteLineAsync(output);
 
             }
             
