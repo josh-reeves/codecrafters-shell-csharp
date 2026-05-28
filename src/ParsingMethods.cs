@@ -52,6 +52,8 @@ static class ParsingMethods
         catch (Exception ex)
         {
             Console.WriteLine(ex);
+
+            return ast;
             
         }
 
