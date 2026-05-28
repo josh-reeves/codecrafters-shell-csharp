@@ -139,7 +139,7 @@ public class ShellCommand : IShellCommand
                     !IsStdInRedirected &&
                     !IsStdOutRedirected &&
                     !IsStdErrRedirected,
-                RedirectStandardOutput = IsStdOutRedirected || IsStdInRedirected,
+                RedirectStandardOutput = IsStdOutRedirected,
                 RedirectStandardError = IsStdErrRedirected,
                 RedirectStandardInput = IsStdInRedirected,
 
@@ -331,9 +331,9 @@ public class ShellCommand : IShellCommand
             while (Shell.InReader?.ReadLine() is string input)
             {
                 process.StandardInput.WriteLine(input);
-
+#if DEBUG
                 Console.WriteLine($"[DEBUG] Writing to stdin of {process.StartInfo.FileName}: {input}");
-
+#endif
             }
 
             process.StandardInput.Close();

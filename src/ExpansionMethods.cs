@@ -56,7 +56,7 @@ static class ExpansionMethods
     public static IToken ExpandSingleQuote(IToken token)
     {
         string input = token.RawValue;
-        char quoteChar = input[0];        
+        char quoteChar = input[0];   
         int end = input.IndexOf(quoteChar, 1) >= 1 ? input.IndexOf(quoteChar, 1) : input.Length;
 
         ShellToken expansion = new(TokenType.Expansion)

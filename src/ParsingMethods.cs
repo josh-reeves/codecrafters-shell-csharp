@@ -49,9 +49,9 @@ static class ParsingMethods
             return ast;
             
         }
-        catch
+        catch (Exception ex)
         {
-            throw new Exception(errMsg);
+            Console.WriteLine(ex);
             
         }
 
