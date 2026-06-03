@@ -3,22 +3,7 @@ using System.IO.Pipes;
 using System.Text;
 using Interfaces;
 
-namespace Shell.Commands;
-
-
-/* [DESIGN NOTE] Typing up the below comment and considering the following:
- *  "This includes the creation of any required shell forks...." On the one
- *  hand, the shell should probably be responsible for forking itself (and maybe
- *  even setting up its pipes). It makes sense, and they add a lot of complexity 
- *  to this class that could stand to be offloaded elsewhere. On the other hand,
- *  the benefit of handling those functions here, is that this class already 
- *  includes logic for executing external commands (for forking), and must be
- *  able to identify and handle redirection nodes, which is tangentially
- *  related.
- *
- *  This isn't a big deal right now, and may even be considered beneficial by
- *   some (deep class vs. shallow class). It may be something to consider in the
- *   future, though.*/
+namespace Shell.Core.Commands;
 
 /// <summary>
 ///  The ShellCommand class handles the interpretation and execution of parsed 
@@ -80,6 +65,8 @@ public class ShellCommand : IShellCommand
 
     public StreamReader StandardError { get; internal set; }
 
+    public IDebugger? Debugger { get; set; }
+
     #endregion
 
     #region Methods
@@ -114,6 +101,40 @@ public class ShellCommand : IShellCommand
             }
 
         }
+#if DEBUG
+        IList<string> arglist = new List<string>();
+
+        // Need to move this into the debugger class and make it reusable:
+        foreach (string arg in arguments)
+        {
+            switch (arg)
+            {
+                case "":
+                    arglist.Add("<empty string>");
+
+                    continue;
+
+                case " ":
+                    arglist.Add("<space>");
+
+                    continue;
+
+                case "\n":
+                    arglist.Add("<newline>");
+
+                    continue;
+
+                default:
+                    arglist.Add(arg);
+
+                    continue;
+
+            }
+            
+        }
+
+        Debugger?.WriteLine($"EXECUTION: Executing command {command}. IsInputRedirected: {IsStdInRedirected}. Arguments: {string.Join(", ", arglist)}");
+#endif
 
         if (Shell.Builtins.ContainsKey(command))
         {
@@ -305,7 +326,6 @@ public class ShellCommand : IShellCommand
     /// </summary>
     /// <param name="startInfo">
     /// </param>
-    /// 
     private void ExecuteExternal(ProcessStartInfo startInfo)
     {
         Process process = new() { StartInfo = startInfo};
@@ -331,9 +351,9 @@ public class ShellCommand : IShellCommand
             while (Shell.InReader?.ReadLine() is string input)
             {
                 process.StandardInput.WriteLine(input);
-#if DEBUG
-                Console.WriteLine($"[DEBUG] Writing to stdin of {process.StartInfo.FileName}: {input}");
-#endif
+
+                Debugger?.WriteLine($"EXECUTION: Writing to stdin of {process.StartInfo.FileName}: {input}");
+
             }
 
             process.StandardInput.Close();

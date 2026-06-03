@@ -1,6 +1,6 @@
 using Interfaces;
 
-namespace Shell.Extensions.ShellInputHandler.Lexer;
+namespace Shell.Core.Input.ShellInputHandler.Lexer;
 
 public class ShellToken : IShellToken
 {

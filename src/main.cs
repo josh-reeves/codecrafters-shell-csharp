@@ -1,13 +1,17 @@
 using System.IO.Pipes;
-using System.Threading.Tasks;
 using Interfaces;
-using Shell.Extensions.ShellInputHandler;
-using Shell.Extensions.ShellInputHandler.Expander;
-using Shell.Extensions.ShellInputHandler.Lexer;
-using Shell.Extensions.ShellInputHandler.Lexer.State;
-using Shell.Extensions.ShellInputHandler.Parser;
+using Shell.Core.Input.ShellInputHandler;
+using Shell.Core.Input.ShellInputHandler.Expander;
+using Shell.Core.Input.ShellInputHandler.Lexer;
+using Shell.Core.Input.ShellInputHandler.Lexer.State;
+using Shell.Core.Input.ShellInputHandler.Parser;
+using Shell.Extensions.Debugger;
 
 namespace Shell;
+
+/// <remarks>
+/// All of the code at the top level provides the configuration for the shell.
+/// </remarks>
 
 /// <summary>
 /// Static class providing defined flags for program arguments:
@@ -24,63 +28,6 @@ static class Flags
     
 }
 
-static class ShellChars
-{
-    static ShellChars() {}
-
-    public static IInputMap Command { get; } = new InputMap(" ", new LexerSeparatorState());
-
-    public static IInputMap Home { get; } = new InputMap("~", expansionMethod: ExpansionMethods.ExpandHome);
-
-    public static IInputMap PathSeparator { get; } = new InputMap(Path.PathSeparator.ToString());
-
-    public static IInputMap Escape { get; } = new InputMap("\\", new LexerEscapeState(), () => new ShellToken(TokenType.Word), ExpansionMethods.ExpandEscape);
-
-    public static IInputMap NewLine { get; } = new InputMap(@"\n", expansionMethod: ExpansionMethods.ExpandNewLine);
-
-    public static IInputMap SingleQuote { get; } = new InputMap("'", new LexerGroupDelimiterState('\''), () => new ShellToken(TokenType.Word), ExpansionMethods.ExpandSingleQuote);
-    
-    public static IInputMap DoubleQuote { get; } = new InputMap("\"", new LexerGroupDelimiterState('"', Escape.Sequence[0]), () => new ShellToken(TokenType.Word), ExpansionMethods.ExpandDoubleQuote);
-    
-    public static IInputMap Redirect { get; } = new InputMap(">", new LexerOperatorState(">"), () => new ShellToken(TokenType.RedirectStdOut));
-    
-    public static IInputMap Pipe { get; } = new InputMap("|", new LexerOperatorState("|"), () => new ShellToken(TokenType.Pipe));
-    
-    public static IInputMap Append { get; } = new InputMap(">>", new LexerOperatorState(">>"), () => new ShellToken(TokenType.AppendStdOut));
-
-    /// <summary>
-    /// Provides a unified container for items needed to configure the
-    ///  individual components used in the input handling process.
-    /// </summary>
-    public struct InputMap : IInputMap
-    {
-        #region Constructor(s)
-        public InputMap(string sequence, IState? state = null, Func<IToken>? token = null, Func<IToken, IToken>? expansionMethod = null)
-        {
-            Sequence = sequence;
-            State = state;
-            Token = token;
-            ExpansionMethod = expansionMethod;
-            
-        }
-
-        #endregion
-
-        #region Properties
-        public string Sequence { get; } 
-
-        public IState? State { get; set; }
-
-        public Func<IToken>? Token { get; set; }
-
-        public Func<IToken, IToken>? ExpansionMethod { get; set; }
-
-        #endregion
-        
-    }
-
-}
-
 class Program
 {
     static async Task Main(string[] args)
@@ -88,6 +35,17 @@ class Program
         string? command = null,
                 streamHandle = null;
 
+        Debugger? debugger = null;
+#if DEBUG
+        debugger = new()
+        {
+            Prefix = $"[DEBUG-PID{Environment.ProcessId}] ",
+            
+        };
+
+        debugger.WriteLine($"Launching PID {Environment.ProcessId}.");
+#endif
+        // Process external arguments:
         for (int i = 0; i <= args.Length - 1; i++)
         {
             if (i == 0)
@@ -107,25 +65,38 @@ class Program
 
         }
 
+        ParsingMethods.Debugger = debugger;
+
+        // Build the dependecies for the shell:
         LexerDefaultState defaultState = new();
+        
         LexerStateController stateController = new(
             defaultState, 
             new Dictionary<IState, Func<IToken>> 
             {
                 { defaultState, () => new ShellToken(TokenType.Word) }
                 
-            });
+            })
+        {
+            Debugger = debugger
+            
+        };
 
-        ShellInputHandler inputHandler = new(new Lexer(stateController), new Expander(), new Parser(ParsingMethods.Parse));
+        ShellInputHandler inputHandler = new(new Lexer(stateController) {Debugger = debugger}, new Expander() {Debugger = debugger}, new Parser(ParsingMethods.Parse))
+        {
+            Debugger = debugger,
+            
+        };
+        
         ExpansionMethods.Expander = inputHandler.Expander;
 
         inputHandler.RegisterInput(
             [
+                ShellChars.Escape,
+                ShellChars.NewLine,
                 ShellChars.Command,
                 ShellChars.Home,
                 ShellChars.PathSeparator,
-                ShellChars.Escape,
-                ShellChars.NewLine,
                 ShellChars.SingleQuote,
                 ShellChars.DoubleQuote,
                 ShellChars.Redirect,
@@ -138,14 +109,22 @@ class Program
             
             ]);
 
+        // Create the shell and run the REPL::
         Shell shell = new("$ ", "PATH", ShellChars.Command.Sequence[0], inputHandler)
         {
-            InReader = streamHandle is not null ? new StreamReader(new AnonymousPipeClientStream(PipeDirection.In, streamHandle)): null
+            InReader = streamHandle is not null ? new StreamReader(new AnonymousPipeClientStream(PipeDirection.In, streamHandle)): null,
+            Debugger = debugger
 
         };
 
         await shell.Run(command);
+#if DEBUG
+        debugger.WriteLine($"Exiting PID {Environment.ProcessId}.");
+#endif
 
     }
 
+
+
 }
+

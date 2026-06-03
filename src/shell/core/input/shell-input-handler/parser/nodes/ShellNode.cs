@@ -1,8 +1,6 @@
-using System;
-using System.Security.Cryptography.X509Certificates;
 using Interfaces;
 
-namespace Shell.Extensions.ShellInputHandler.Parser.Nodes;
+namespace Shell.Core.Input.ShellInputHandler.Parser.Nodes;
 
 public class ShellNode : IShellNode
 {

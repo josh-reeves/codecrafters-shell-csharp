@@ -1,6 +1,6 @@
 using Interfaces;
 
-namespace Shell.Extensions.ShellInputHandler.Lexer.State;
+namespace Shell.Core.Input.ShellInputHandler.Lexer.State;
 
 public abstract class LexerState : IState
 {
@@ -26,7 +26,7 @@ public abstract class LexerState : IState
         if (controller.TokenMap.ContainsKey(this))
         {
             controller.CurrentToken ??= controller.TokenMap[this].Invoke();
-            controller.CurrentToken.Position = controller.Position;
+            controller.CurrentToken.Position = controller.Position; // Need to fix this.
 
         }
 
@@ -125,6 +125,14 @@ public class LexerGroupDelimiterState : LexerState
 
         }
 
+        if (escape is not null && controller.RemainingText[0] == escape)
+        {
+            controller.Transition(new LexerEscapeState(this));
+
+            return;
+            
+        }
+
         controller.ConsumeInput();
 
         if (string.IsNullOrWhiteSpace(controller.RemainingText))
@@ -133,12 +141,6 @@ public class LexerGroupDelimiterState : LexerState
 
             return;
         
-        }
-
-        if (escape is not null && controller.RemainingText[0] == escape)
-        {
-            controller.Transition(new LexerEscapeState(this));
-            
         }
 
         if (controller.RemainingText[0] == terminator)
@@ -223,6 +225,7 @@ public class LexerOperatorState : LexerState
 
         if (controller.CurrentToken.RawValue == seq)
         {
+            controller.AppendToken();
             controller.Transition(controller.DefaultState);
 
         }
@@ -301,6 +304,14 @@ public class LexerEscapeState : LexerState
         }
 
         controller.ConsumeInput(2);
+
+        if (string.IsNullOrWhiteSpace(controller.RemainingText))
+        {            
+            controller.Transition(controller.DefaultState);
+
+            return;
+        
+        }
 
         controller.Transition(previous ?? controller.DefaultState);
 

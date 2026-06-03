@@ -1,19 +1,17 @@
-using System.Diagnostics;
-using System.IO.Pipelines;
-using System.Threading.Tasks;
 using Interfaces;
-using Shell.Commands;
-using Type = Shell.Commands.Type;
+using System.Diagnostics;
+using Shell.Core.Commands;
+using Type = Shell.Core.Commands.Type;
 
 namespace Shell;
 
-public class Shell : IShell
+public class Shell : IShell, IDebuggable
 {
     #region Fields
     private string prompt;
 
     private IInputHandler inputHandler;
-    
+
     #endregion
 
     #region Constructor(s)
@@ -58,6 +56,8 @@ public class Shell : IShell
 
     public StreamReader? InReader { get; set; }
 
+    public IDebugger? Debugger { get; set; }
+
     public IList<string> PathList { get => Path.Split(PathSeparator).ToList(); }
 
     public IList<Process> Forks { get; }
@@ -86,12 +86,18 @@ public class Shell : IShell
     public async Task Run(string? externalInput = null)
     {
         ShellIsActive = externalInput == null;
-
+#if DEBUG
+        Debugger?.WriteLine($"Launching Shell. Interactive mode: {ShellIsActive}");
+#endif
         do
         {
             try
             {
-                ShellCommand command = new(this);
+                ShellCommand command = new(this)
+                {
+                    Debugger = Debugger
+
+                };
 
                 Console.Write(ShellIsActive ? prompt : string.Empty);
 
@@ -115,8 +121,10 @@ public class Shell : IShell
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[DEBUG] EXCEPTION:{ex.Message}");
-
+                Console.WriteLine("An error occurred while executing the command.");
+#if DEBUG
+                Debugger?.WriteLine($"[DEBUG] EXCEPTION:{ex.Message}");
+#endif
             }
 
             Reset();
@@ -168,8 +176,6 @@ public class Shell : IShell
         Forks.Clear();
         OutWriters.Clear();
         ErrWriters.Clear();
-
-        Pipe pipe = new(PipeOptions.Default);
 
     }
 

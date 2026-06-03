@@ -1,6 +1,6 @@
 using Interfaces;
 
-namespace Shell.Commands;
+namespace Shell.Core.Commands;
 
 public class ChangeDirectory : ShellCommand
 {

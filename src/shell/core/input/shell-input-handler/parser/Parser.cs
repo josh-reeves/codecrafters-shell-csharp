@@ -1,7 +1,6 @@
 using Interfaces;
-using Shell.Extensions.ShellInputHandler.Parser.Nodes;
 
-namespace Shell.Extensions.ShellInputHandler.Parser;
+namespace Shell.Core.Input.ShellInputHandler.Parser;
 
 /// <summary>
 /// Unlike the Lexer and Expander, the Parser class is not designed to be easily 

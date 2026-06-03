@@ -1,6 +1,6 @@
 using Interfaces;
-using Shell.Extensions.ShellInputHandler.Expander;
-using Shell.Extensions.ShellInputHandler.Lexer;
+using Shell.Core.Input.ShellInputHandler.Expander;
+using Shell.Core.Input.ShellInputHandler.Lexer;
 
 namespace Shell;
 
@@ -25,15 +25,15 @@ static class ExpansionMethods
     {
         ShellToken expansion = new(TokenType.Expansion)
         {
-            RawValue = ShellChars.Escape.Sequence,
-            ExpandedValue = string.Empty
+            RawValue = token.RawValue[0..2],
+            ExpandedValue = token.RawValue[1..2]
             
         };
 
-        if (token is IShellToken shellToken && shellToken.IsQuoted)
+        if (((IShellToken)token).IsQuoted)
         {
-            expansion.ExpandedValue = ShellChars.Escape.Sequence;
-
+            expansion.ExpandedValue = token.RawValue[0..2];
+            
         }
 
         return expansion;
@@ -56,12 +56,13 @@ static class ExpansionMethods
     public static IToken ExpandSingleQuote(IToken token)
     {
         string input = token.RawValue;
-        char quoteChar = input[0];   
+
+        char quoteChar = ShellChars.SingleQuote.Sequence[0];
         int end = input.IndexOf(quoteChar, 1) >= 1 ? input.IndexOf(quoteChar, 1) : input.Length;
 
         ShellToken expansion = new(TokenType.Expansion)
         {
-            RawValue = input[0..(end < input.Length ? end + 1 : end)],
+            RawValue = input[0..(end + 1 > input.Length ? input.Length : end + 1)],
             ExpandedValue = input[1..end]
             
         };
@@ -71,17 +72,38 @@ static class ExpansionMethods
     }
 
     public static IToken ExpandDoubleQuote(IToken token)
-    {   
-        IShellToken expansion = (IShellToken)ExpandSingleQuote(token);
+    {
+        int i;
+        IShellToken expansion = new ShellToken(TokenType.Expansion);
+
+        for (i = 1; i < token.RawValue.Length; i++)
+        {
+            Console.WriteLine($"Current char: {token.RawValue[i]}, Previous char: {token.RawValue[i - 1]}");
+            if (token.RawValue[i] == ShellChars.DoubleQuote.Sequence[0] && !expansion.ExpandedValue.EndsWith(ShellChars.Escape.Sequence))
+            {
+                Console.WriteLine("End of double quote found.");
+                break;
+                
+            }
+
+            expansion.ExpandedValue += token.RawValue[i];
+
+            Console.WriteLine($"Expanded value: {expansion.ExpandedValue}");
+
+        }
+
+        expansion.RawValue = token.RawValue[0..(i < token.RawValue.Length ? i + 1 : token.RawValue.Length)];
+
         IShellToken temp = new ShellToken(TokenType.Expansion)
         {
             RawValue = expansion.ExpandedValue,
+            ExpandedValue = string.Empty,
             IsQuoted = true
             
         };
 
         Expander.Expand(new Queue<IToken>([temp]));
-
+        
         expansion.ExpandedValue = temp.ExpandedValue;
 
         return expansion;

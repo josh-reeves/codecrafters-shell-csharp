@@ -1,6 +1,6 @@
 using Interfaces;
 
-namespace Shell.Extensions.ShellInputHandler;
+namespace Shell.Core.Input.ShellInputHandler;
 
 /// <summary>
 /// The ShellInputHandler class provides a unified interface for converting raw
@@ -11,7 +11,7 @@ namespace Shell.Extensions.ShellInputHandler;
 /// To facilitate this, the class also provides methods and structures that 
 ///  unify and simplify the process configuring the individual components.
 /// </summary>
-public class ShellInputHandler : IInputHandler
+public class ShellInputHandler : IInputHandler, IDebuggable
 {
     #region Constructor(s)
     public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser, IList<IInputMap>? inputMaps = null)
@@ -46,6 +46,8 @@ public class ShellInputHandler : IInputHandler
     /// </summary>
     public IParser Parser { get; set;}
 
+    public IDebugger? Debugger { get; set; }
+
     #endregion
 
     #region Methods
@@ -56,12 +58,19 @@ public class ShellInputHandler : IInputHandler
     /// <param name="input"></param>
     /// <returns>A syntax tree representing the provided input.</returns>
     public ITree HandleInput(string input)
-    {        
+    {
+#if DEBUG        
+        Debugger?.WriteLine($"Handling input: {input}");
+#endif
         Queue<IToken> tokenizedInput = Lexer?.Tokenize(input) ?? [];
 
         tokenizedInput = Expander?.Expand(tokenizedInput) ?? tokenizedInput;
 
-        return Parser.Parse(tokenizedInput);
+        ITree parsedInput = Parser.Parse(tokenizedInput);
+#if DEBUG
+        Debugger?.WriteLine($"Input handling complete.");
+#endif
+        return parsedInput;
 
     }
 
@@ -99,10 +108,6 @@ public class ShellInputHandler : IInputHandler
         }
         
     }
-
-    #endregion
-
-    #region Structs
 
     #endregion
 

@@ -1,8 +1,8 @@
 using Interfaces;
 
-namespace Shell.Extensions.ShellInputHandler.Lexer.State;
+namespace Shell.Core.Input.ShellInputHandler.Lexer.State;
 
-public class LexerStateController : ILexerStateController
+public class LexerStateController : ILexerStateController, IDebuggable
 {
     private IState currentState;
 
@@ -33,6 +33,8 @@ public class LexerStateController : ILexerStateController
 
     public IState DefaultState { get; private set; }
 
+    public IDebugger? Debugger { get; set; }
+
     public IState CurrentState
     {
         get => currentState;
@@ -41,7 +43,10 @@ public class LexerStateController : ILexerStateController
         {
             currentState = value;
             currentState.Controller = this;
-
+#if DEBUG
+            Debugger?.WriteLine($"New lexer state set: {CurrentState.GetType().Name}");
+            Debugger?.WriteLine($"Remaining: {RemainingText}");
+#endif
         }
         
     }
@@ -91,17 +96,16 @@ public class LexerStateController : ILexerStateController
 
     public void AppendToken()
     {
-        if (string.IsNullOrWhiteSpace(CurrentToken?.RawValue))
+        IToken? token = CurrentToken;
+        CurrentToken = null;
+
+        if (string.IsNullOrWhiteSpace(token?.RawValue))
         {
             return;
 
         }
 
-        IToken token = CurrentToken;
-
         TokenizedInput.Enqueue(token);
-
-        CurrentToken = null;
 
     }
 
