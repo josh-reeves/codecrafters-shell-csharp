@@ -9,7 +9,7 @@ namespace Shell.Core.Input.ShellInputHandler.Parser;
 ///  a delegate for the parsing method, which would complicate the interface 
 ///  and take almost as much work to use as writing a new parser each time.
 /// </summary>
-public class Parser : IParser
+public class Parser : IParser, IDebuggable
 {
     #region Constructor(s)
     public Parser(Func<Queue<IToken>, ITree> parsingDelegate) 
@@ -21,13 +21,25 @@ public class Parser : IParser
     #endregion
 
     #region Properties
-    Func<Queue<IToken>, ITree> ParsingDelegate  { get; }
+    public Func<Queue<IToken>, ITree> ParsingDelegate  { get; }
+
+    public IDebugger? Debugger { get; set; }
 
     #endregion
 
     #region Methods
     public ITree Parse(Queue<IToken> tokens)
-        => ParsingDelegate(tokens);
+    {
+#if DEBUG
+        Debugger?.WriteLine("PARSING: Beginning parsing...");
+#endif
+        ITree tree = ParsingDelegate.Invoke(tokens);
+#if DEBUG
+        Debugger?.WriteLine("PARSING: Parsing complete.");
+#endif
+        return tree;
+        
+    }
 
     #endregion
 

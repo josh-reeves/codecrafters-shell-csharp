@@ -41,11 +41,13 @@ public class Expander : IExpander, IDebuggable
 
     }
 
-    public IToken Expand(IToken token)
+    private IToken Expand(IToken token)
     {
+        bool isQuoted = (token as IShellToken)?.IsQuoted ?? false;
+
         token.ExpandedValue = token.RawValue;
 #if DEBUG
-        Debugger?.WriteLine($"EXPANSION: New Token - Raw Value: {token.RawValue}");
+        Debugger?.WriteLine($"EXPANSION: New Token. Raw Value: {token.RawValue}, IsQuoted: {(token as IShellToken)?.IsQuoted ?? false}");
 #endif
         for (int i = 0; i < token.ExpandedValue.Length; i++)
         {
@@ -68,8 +70,17 @@ public class Expander : IExpander, IDebuggable
                      *  requiring a hard depedency to the token class to be
                      *  created. The value does not matter:*/
                     expansion = ExpansionMap.First().Value(token);
+
+                    /* Reset token's IsQuoted value in case the above 
+                     *  modifies it:*/
+                    ((IShellToken)expansion).IsQuoted = isQuoted;
+
                     expansion.ExpandedValue = expansion.RawValue = remaining;
-                    ((IShellToken)expansion).IsQuoted = ((IShellToken)token).IsQuoted;
+
+                    /* Preserve the initial token's IsQuoted value if it was set
+                     *  to true, otherwise let the expansion methods take 
+                     *  over:*/
+                    ((IShellToken)expansion).IsQuoted = isQuoted ? isQuoted : ((IShellToken)expansion).IsQuoted;
                     
                     expansion = ExpansionMap[key](expansion);
 #if DEBUG

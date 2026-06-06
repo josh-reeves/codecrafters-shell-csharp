@@ -29,7 +29,7 @@ public class Lexer : ILexer, IDebuggable
     public Queue<IToken> Tokenize(string input)
     {
 #if DEBUG
-        Debugger?.WriteLine($"Beginning tokenization...");
+        Debugger?.WriteLine($"TOKENIZATION: Beginning tokenization...");
 #endif
         TokenizedInput.Clear();
  
@@ -41,7 +41,7 @@ public class Lexer : ILexer, IDebuggable
 
         }
 #if DEBUG
-        Debugger?.WriteLine($"Tokenization complete.");
+        Debugger?.WriteLine($"TOKENIZATION: Tokenization complete.");
 #endif
         return TokenizedInput;
 

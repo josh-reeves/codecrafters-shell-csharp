@@ -133,7 +133,7 @@ public class ShellCommand : IShellCommand
             
         }
 
-        Debugger?.WriteLine($"EXECUTION: Executing command {command}. IsInputRedirected: {IsStdInRedirected}. Arguments: {string.Join(", ", arglist)}");
+        Debugger?.WriteLine($"EXECUTION: Executing command {command}; IsInputRedirected: {IsStdInRedirected}; Arguments: [{string.Join(", ", arglist)}]");
 #endif
 
         if (Shell.Builtins.ContainsKey(command))
@@ -298,7 +298,9 @@ public class ShellCommand : IShellCommand
             IsStdOutRedirected = true;
 
             node.RemoveChild(child);
-
+#if DEBUG
+            Debugger?.WriteLine($"EXECUTION: Child node removed: {RestoreCommand(child)}");
+#endif
             AnonymousPipeServerStream stream = new(
                 PipeDirection.Out, 
                 HandleInheritability.Inheritable);
@@ -311,7 +313,9 @@ public class ShellCommand : IShellCommand
                   stream.GetClientHandleAsString() ])); 
 
             stream.DisposeLocalCopyOfClientHandle();
-
+#if DEBUG
+            Debugger?.WriteLine($"EXECUTION: Local copy of client handle removed.");
+#endif
         }
         catch (Exception ex)
         {
@@ -333,7 +337,9 @@ public class ShellCommand : IShellCommand
         process.Start();
 
         Shell.Forks.Add(process);
-
+#if DEBUG
+        Debugger?.WriteLine($"{process.StartInfo.FileName} added to shell forks");
+#endif
         if (process.StartInfo.RedirectStandardOutput)
         {
             StandardOutput = process.StandardOutput;
