@@ -99,6 +99,8 @@ static class ExpansionMethods
             expansion.RawValue = token.RawValue[0..1];
             expansion.ExpandedValue = expansion.RawValue;
 
+            Console.WriteLine("butt");
+
             return expansion;
 
         }

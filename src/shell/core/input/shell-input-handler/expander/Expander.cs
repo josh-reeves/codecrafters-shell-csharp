@@ -76,19 +76,21 @@ public class Expander : IExpander, IDebuggable
                     ((IShellToken)expansion).IsQuoted = isQuoted;
 
                     expansion.ExpandedValue = expansion.RawValue = remaining;
+                    
+                    expansion = ExpansionMap[key](expansion);
 
                     /* Preserve the initial token's IsQuoted value if it was set
                      *  to true, otherwise let the expansion methods take 
                      *  over:*/
-                    ((IShellToken)expansion).IsQuoted = isQuoted ? isQuoted : ((IShellToken)expansion).IsQuoted;
-                    
-                    expansion = ExpansionMap[key](expansion);
+                    ((IShellToken)expansion).IsQuoted = ((IShellToken)token).IsQuoted ? ((IShellToken)token).IsQuoted : ((IShellToken)expansion).IsQuoted;
 #if DEBUG
-                    Debugger?.WriteLine($"EXPANSION: New Expansion - Raw Value: {expansion.RawValue}, Expanded Value: {expansion.ExpandedValue}");
+                    Debugger?.WriteLine($"EXPANSION: New Expansion - Raw Value: {expansion.RawValue}, Expanded Value: {expansion.ExpandedValue}, IsQuoted: {((IShellToken)expansion).IsQuoted}");
 #endif
                     token.ExpandedValue = token.ExpandedValue.Remove(i, expansion.RawValue.Length).Insert(i, expansion.ExpandedValue);
 
                     remaining = token.ExpandedValue[i..];
+
+                    isQuoted = ((IShellToken)expansion).IsQuoted;
 
                 }
                 
