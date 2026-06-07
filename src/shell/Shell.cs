@@ -114,7 +114,7 @@ public class Shell : IShell, IDebuggable
 
                 if (command.IsStdErrRedirected)
                 {
-                    await RedirectStream(command.StandardError, OutWriters);
+                    await RedirectStream(command.StandardError, ErrWriters);
 
                 }
 
