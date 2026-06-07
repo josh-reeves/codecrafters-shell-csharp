@@ -43,14 +43,13 @@ public class Expander : IExpander, IDebuggable
 
     private IToken Expand(IToken token)
     {
-        bool isQuoted = (token as IShellToken)?.IsQuoted ?? false;
-
         token.ExpandedValue = token.RawValue;
 #if DEBUG
         Debugger?.WriteLine($"EXPANSION: New Token. Raw Value: {token.RawValue}, IsQuoted: {(token as IShellToken)?.IsQuoted ?? false}");
 #endif
         for (int i = 0; i < token.ExpandedValue.Length; i++)
         {
+            bool isQuoted = (token as IShellToken)?.IsQuoted ?? false;
             string remaining = token.ExpandedValue[i..];
             IToken? expansion = null;
 #if DEBUG
