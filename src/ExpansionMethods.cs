@@ -105,7 +105,15 @@ static class ExpansionMethods
         
         for (i = 1; i < token.RawValue.Length; i++)
         {
-            if (token.RawValue[i] == ShellChars.DoubleQuote.Sequence[0] && !expansion.ExpandedValue.EndsWith(ShellChars.Escape.Sequence))
+            bool escaped = false;
+
+            if (expansion.ExpandedValue.EndsWith(ShellChars.Escape.Sequence) && !expansion.ExpandedValue.EndsWith(ShellChars.Escape.Sequence + ShellChars.Escape.Sequence))
+            {
+                escaped = true; 
+
+            }
+
+            if (token.RawValue[i] == ShellChars.DoubleQuote.Sequence[0] && !escaped)
             {
                 break;
                 
