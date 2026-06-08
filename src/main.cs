@@ -118,13 +118,10 @@ class Program
         };
 
         await shell.Run(command);
-#if DEBUG
-        debugger.WriteLine($"Exiting PID {Environment.ProcessId}.");
-#endif
+
+        debugger?.WriteLine($"Exiting PID {Environment.ProcessId}.");
 
     }
-
-
 
 }
 

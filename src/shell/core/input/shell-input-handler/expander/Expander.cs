@@ -26,17 +26,16 @@ public class Expander : IExpander, IDebuggable
     #region Methods
     public Queue<IToken> Expand(Queue<IToken> tokens)
     {
-#if DEBUG
-    Debugger?.WriteLine($"EXPANSION: Beginning expansion...");
-#endif
+        Debugger?.WriteLine($"EXPANSION: Beginning expansion...");
+
         foreach (IToken token in tokens)
         {
             token.ExpandedValue = Expand(token).ExpandedValue;
 
         }
-#if DEBUG
-    Debugger?.WriteLine($"EXPANSION: Expansion complete.");
-#endif
+
+        Debugger?.WriteLine($"EXPANSION: Expansion complete.");
+
         return tokens;
 
     }
@@ -44,27 +43,25 @@ public class Expander : IExpander, IDebuggable
     private IToken Expand(IToken token)
     {
         token.ExpandedValue = token.RawValue;
-#if DEBUG
+
         Debugger?.WriteLine($"EXPANSION: New Token. Raw Value: {token.RawValue}, IsQuoted: {(token as IShellToken)?.IsQuoted ?? false}");
-#endif
+
         for (int i = 0; i < token.ExpandedValue.Length; i++)
         {
             bool isQuoted = (token as IShellToken)?.IsQuoted ?? false;
             string remaining = token.ExpandedValue[i..];
             IToken? expansion = null;
-#if DEBUG
+
             Debugger?.WriteLine($"EXPANSION: Remaining: {remaining}");
-#endif
+
             foreach (string key in ExpansionMap.Keys)
             {
-#if DEBUG                
                 Debugger?.WriteLine($"EXPANSION: Checking for match: {key}");
-#endif
+
                 if (remaining.StartsWith(key))
                 {
-#if DEBUG
                     Debugger?.WriteLine($"EXPANSION: Token match: {key}");
-#endif
+
                     /* Grabs a token from the first expansion method without
                      *  requiring a hard depedency to the token class to be
                      *  created. The value does not matter:*/
@@ -82,9 +79,9 @@ public class Expander : IExpander, IDebuggable
                      *  to true, otherwise let the expansion methods take 
                      *  over:*/
                     ((IShellToken)expansion).IsQuoted = ((IShellToken)token).IsQuoted ? ((IShellToken)token).IsQuoted : ((IShellToken)expansion).IsQuoted;
-#if DEBUG
+
                     Debugger?.WriteLine($"EXPANSION: New Expansion - Raw Value: {expansion.RawValue}, Expanded Value: {expansion.ExpandedValue}, IsQuoted: {((IShellToken)expansion).IsQuoted}");
-#endif
+
                     token.ExpandedValue = token.ExpandedValue.Remove(i, expansion.RawValue.Length).Insert(i, expansion.ExpandedValue);
 
                     remaining = token.ExpandedValue[i..];
@@ -105,7 +102,21 @@ public class Expander : IExpander, IDebuggable
 
         return token;
 
+        /* This algorithm is a "beautiful" mess. It allows the tokens to be 
+        *   scanned in roughly O(n*m) where n is the number of characters in the  
+        *   token and m is the number of sequences in the expansion map. From a 
+        *   performance perspective, this is better than scanning the string 
+        *   multiple times, and it's probably better than using multiple string  
+        *   replace operations, which, presumably, would also scan the string 
+        *   multiple times behind the scenes.
+        *
+        *  On the other hand, though, it's absolutely hideous and much more
+        *   difficult to work with than I would prefer. I need to work on 
+        *   cleaning this up and streamlining some of the complexity if
+        *   possible.*/
+
     }
+    
 
     #endregion
 

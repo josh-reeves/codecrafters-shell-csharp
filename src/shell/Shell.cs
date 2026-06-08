@@ -86,9 +86,9 @@ public class Shell : IShell, IDebuggable
     public async Task Run(string? externalInput = null)
     {
         ShellIsActive = externalInput == null;
-#if DEBUG
-        Debugger?.WriteLine($"Launching Shell. Interactive mode: {ShellIsActive}");
-#endif
+        
+        Debugger?.WriteLine($"REPL: Launching Shell. Interactive mode: {ShellIsActive}");
+        
         do
         {
             try
@@ -121,10 +121,9 @@ public class Shell : IShell, IDebuggable
             }
             catch (Exception ex)
             {
-                Console.WriteLine("An error occurred while executing the command.");
-#if DEBUG
-                Debugger?.WriteLine($"[DEBUG] EXCEPTION:{ex.Message}");
-#endif
+                Console.WriteLine("An unhandled exception occured.");
+                Debugger?.WriteLine($"EXCEPTION:{ex.Message}");
+
             }
 
             Reset();
@@ -138,6 +137,8 @@ public class Shell : IShell, IDebuggable
     {
         while (await reader.ReadLineAsync() is string output)
         {
+            Debugger?.WriteLine($"REPL: Redirecting {output} to {writers.Count()} StreamWriters.");
+
             foreach (StreamWriter writer in writers)
             {
                 await writer.WriteLineAsync(output);

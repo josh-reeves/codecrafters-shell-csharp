@@ -28,9 +28,9 @@ public class Lexer : ILexer, IDebuggable
     #region Methods
     public Queue<IToken> Tokenize(string input)
     {
-#if DEBUG
+
         Debugger?.WriteLine($"TOKENIZATION: Beginning tokenization...");
-#endif
+
         TokenizedInput.Clear();
  
         Controller.RemainingText = RawInput = input;
@@ -40,9 +40,9 @@ public class Lexer : ILexer, IDebuggable
             Controller.CurrentState.Execute();
 
         }
-#if DEBUG
+
         Debugger?.WriteLine($"TOKENIZATION: Tokenization complete.");
-#endif
+
         return TokenizedInput;
 
     }

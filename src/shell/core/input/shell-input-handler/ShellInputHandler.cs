@@ -59,17 +59,16 @@ public class ShellInputHandler : IInputHandler, IDebuggable
     /// <returns>A syntax tree representing the provided input.</returns>
     public ITree HandleInput(string input)
     {
-#if DEBUG        
-        Debugger?.WriteLine($"Handling input: {input}");
-#endif
+        Debugger?.WriteLine($"REPL: Handling input: {input}");
+
         Queue<IToken> tokenizedInput = Lexer?.Tokenize(input) ?? [];
 
         tokenizedInput = Expander?.Expand(tokenizedInput) ?? tokenizedInput;
 
         ITree parsedInput = Parser.Parse(tokenizedInput);
-#if DEBUG
-        Debugger?.WriteLine($"Input handling complete.");
-#endif
+        
+        Debugger?.WriteLine($"REPL: Input handling complete.");
+        
         return parsedInput;
 
     }

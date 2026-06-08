@@ -70,14 +70,14 @@ static class ParsingMethods
         {
             node.RightChild = new ShellNode(NodeType.OutputRedirection, tokens.Dequeue(), node);
             node = (ShellNode)node.RightChild;
-#if DEBUG
+
             Debugger?.WriteLine($"PARSING: Pipe ({node.Data.ExpandedValue}) parsed.");
-#endif
+
             node.LeftChild = ParseOperators(tokens);
             node = (ShellNode)node.LeftChild;
-#if DEBUG
+
             Debugger?.WriteLine($"PARSING: Node ({node.Data.ExpandedValue}) set as left child.");
-#endif            
+          
         }
 
         return root;
@@ -124,21 +124,21 @@ static class ParsingMethods
         }
 
         IShellNode command = new ShellNode(NodeType.Command, tokens.Dequeue());
-#if DEBUG
+
         Debugger?.WriteLine($"PARSING: Command parsed: {command.Data.ExpandedValue}. Beginning argument parsing.");
-#endif
+
         while (tokens.Count > 0 && tokens.Peek().Type is TokenType.Word)
         {
             ITreeNode node = command.GetLastChild();
 
             node.LeftChild = new ShellNode(NodeType.Argument, tokens.Dequeue(), node);
-#if DEBUG
+
             Debugger?.WriteLine($"PARSING: Argument parsed: {((ShellNode)node.LeftChild).Data.ExpandedValue}");
-#endif           
+     
         }
-#if DEBUG
+
         Debugger?.WriteLine($"PARSING: Argument Parsing Complete");
-#endif
+
         return command;
         
     }

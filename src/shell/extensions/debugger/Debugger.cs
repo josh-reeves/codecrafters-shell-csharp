@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Interfaces;
 
 namespace Shell.Extensions.Debugger;
@@ -9,6 +10,7 @@ public class Debugger : IDebugger
     {
         Prefix = string.Empty;
         Suffix = string.Empty;
+        File = string.Empty;
 
     }
 
@@ -18,6 +20,8 @@ public class Debugger : IDebugger
     public string Prefix { get; set; }
 
     public string Suffix { get; set;}
+
+    public string File { get; set; }
 
     #endregion
 

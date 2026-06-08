@@ -43,10 +43,10 @@ public class LexerStateController : ILexerStateController, IDebuggable
         {
             currentState = value;
             currentState.Controller = this;
-#if DEBUG
+
             Debugger?.WriteLine($"TOKENIZATION: New lexer state set: {CurrentState.GetType().Name}");
             Debugger?.WriteLine($"TOKENIZATION: Remaining: {RemainingText}");
-#endif
+            
         }
         
     }

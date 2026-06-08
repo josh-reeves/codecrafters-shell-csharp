@@ -10,6 +10,12 @@
             "request": "launch",
             "projectPath": "${workspaceFolder}/codecrafters-shell.csproj"
 
+        },
+        {
+            "name": ".NET Core Attach to Child",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
         }
     ]
 }

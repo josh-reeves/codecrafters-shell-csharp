@@ -30,13 +30,12 @@ public class Parser : IParser, IDebuggable
     #region Methods
     public ITree Parse(Queue<IToken> tokens)
     {
-#if DEBUG
         Debugger?.WriteLine("PARSING: Beginning parsing...");
-#endif
+
         ITree tree = ParsingDelegate.Invoke(tokens);
-#if DEBUG
+        
         Debugger?.WriteLine("PARSING: Parsing complete.");
-#endif
+
         return tree;
         
     }
