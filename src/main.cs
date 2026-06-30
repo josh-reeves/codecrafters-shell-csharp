@@ -40,6 +40,7 @@ class Program
         debugger = new()
         {
             Prefix = $"[DEBUG-PID{Environment.ProcessId}] ",
+            File = "log.txt"
             
         };
 
