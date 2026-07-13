@@ -354,15 +354,21 @@ public class ShellCommand : IShellCommand
 
         if (process.StartInfo.RedirectStandardInput)
         {
-            while (Shell.InReader?.ReadLine() is string input)
+            string? input = string.Empty;
+            
+            while ((input = Shell.InReader?.ReadLine()) is not null)
             {
+                Debugger?.WriteLine($"EXECUTION: Writing to stdin of {process.StartInfo.FileName}: {input}");
+
                 process.StandardInput.WriteLine(input);
 
-                Debugger?.WriteLine($"EXECUTION: Writing to stdin of {process.StartInfo.FileName}: {input}");
+                Debugger?.WriteLine($"EXECUTION: {input} written to stdin of {process.StartInfo.FileName}");
 
             }
 
             process.StandardInput.Close();
+
+            Debugger?.WriteLine($"EXECUTION: stdin of {process.StartInfo.FileName} closed after writing {input}");
 
         }
 

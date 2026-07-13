@@ -39,7 +39,7 @@ class Program
 #if DEBUG
         debugger = new()
         {
-            Prefix = $"[DEBUG-PID{Environment.ProcessId}] ",
+            Prefix = $"[{DateTime.Now} DEBUG-PID{Environment.ProcessId}] ",
             File = "log.txt"
             
         };

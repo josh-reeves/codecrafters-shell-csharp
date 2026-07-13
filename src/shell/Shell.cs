@@ -122,7 +122,7 @@ public class Shell : IShell, IDebuggable
             catch (Exception ex)
             {
                 Console.WriteLine("An unhandled exception occured.");
-                Debugger?.WriteLine($"EXCEPTION:{ex.Message}");
+                Debugger?.WriteLine($"EXCEPTION: {ex.Message}");
 
             }
 
@@ -172,6 +172,7 @@ public class Shell : IShell, IDebuggable
             fork.Close();
         }
 
+        InReader?.Close();
         InReader?.Dispose();
 
         Forks.Clear();
