@@ -359,16 +359,40 @@ public class ShellCommand : IShellCommand
             while ((input = Shell.InReader?.ReadLine()) is not null)
             {
                 Debugger?.WriteLine($"EXECUTION: Writing to stdin of {process.StartInfo.FileName}: {input}");
+                                
+                try
+                {
+                    process.StandardInput.WriteLine(input);
 
-                process.StandardInput.WriteLine(input);
+                    Debugger?.WriteLine($"EXECUTION: {input} written to stdin of {process.StartInfo.FileName}");
 
-                Debugger?.WriteLine($"EXECUTION: {input} written to stdin of {process.StartInfo.FileName}");
+
+                }
+                catch (Exception ex)
+                {
+                    Debugger?.WriteLine($"EXECUTION: Failed to write {input} to stdin of {process.StartInfo.FileName}: {ex.Message}");                
+                    
+                    /* Presumably, stdin is no longer useable at this point,
+                     *  so returning here prevents an additional exeption from
+                     *  being thrown when we try to explicitly close it: */
+                    return;
+
+                    /* Worst case scenario, this will prevent all of the
+                     *  expected data from being written to stdin, and since an
+                     *  exception was thrown anyway, that's not entirely 
+                     *  unexpected. Something to keep an eye on for edge cases,
+                     *  maybe, but I think it's basically safe for now. */
+
+                }
+
 
             }
+            
+            Debugger?.WriteLine($"EXECUTION: Attempting to manually close stdin of {process.StartInfo.FileName}.");
 
             process.StandardInput.Close();
 
-            Debugger?.WriteLine($"EXECUTION: stdin of {process.StartInfo.FileName} closed after writing {input}");
+            Debugger?.WriteLine($"EXECUTION: stdin of {process.StartInfo.FileName} manually closed after writing {input}");
 
         }
 
