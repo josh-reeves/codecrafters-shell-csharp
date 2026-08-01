@@ -14,8 +14,11 @@ namespace Shell.Core.Commands;
 ///  The way the class does this is somewhat recursive in nature:
 ///   1. When the class's Execute method is passed an IShellNode, it begins
 ///       walking, interpreting and executing the tree that propagates from that
-///       node. 
-///   2. The class also acts as a base class for the various shell built-ins, 
+///       node.
+///   2. If a pipe node is encountered, the class will spin off an entirely new
+///       copy of the program and pass it the command, with anonymous pipes
+///       handling cross-process communication. 
+///   3. The class also acts as a base class for the various shell built-ins, 
 ///       where its Execute method typically takes a list of optional arguments 
 ///       to pass to the built-in.
 /// 
@@ -354,7 +357,7 @@ public class ShellCommand : IShellCommand
 
         if (process.StartInfo.RedirectStandardInput)
         {
-            string? input = string.Empty;
+            string? input;
             
             while ((input = Shell.InReader?.ReadLine()) is not null)
             {
@@ -365,7 +368,6 @@ public class ShellCommand : IShellCommand
                     process.StandardInput.WriteLine(input);
 
                     Debugger?.WriteLine($"EXECUTION: {input} written to stdin of {process.StartInfo.FileName}");
-
 
                 }
                 catch (Exception ex)
@@ -384,7 +386,6 @@ public class ShellCommand : IShellCommand
                      *  maybe, but I think it's basically safe for now. */
 
                 }
-
 
             }
             

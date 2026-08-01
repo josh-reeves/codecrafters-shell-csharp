@@ -19,6 +19,8 @@ public interface IShell
 
     public IList<string> PathList { get; }
 
+    public IList<string> InputHistory { get; }
+
     public IList<Process> Forks { get; }
 
     public IList<StreamWriter> OutWriters { get; }

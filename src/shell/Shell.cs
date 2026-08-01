@@ -19,6 +19,7 @@ public class Shell : IShell, IDebuggable
     {
         prompt = promptSeq;
 
+        InputHistory = [];
         Forks = [];
         OutWriters = [];
         ErrWriters = [];
@@ -33,7 +34,8 @@ public class Shell : IShell, IDebuggable
             {"pwd", () => new PrintWorkingDirectory(this)},
             {"cd", () => new ChangeDirectory(this)},
             {"exit", () => new Exit(this)},
-            {"type", () => new Type(this)}
+            {"type", () => new Type(this)},
+            {"history", () => new History(this)}
         
         };
 
@@ -59,6 +61,8 @@ public class Shell : IShell, IDebuggable
     public IDebugger? Debugger { get; set; }
 
     public IList<string> PathList { get => Path.Split(PathSeparator).ToList(); }
+
+    public IList<string> InputHistory { get; }
 
     public IList<Process> Forks { get; }
 
@@ -101,10 +105,11 @@ public class Shell : IShell, IDebuggable
 
                 Console.Write(ShellIsActive ? prompt : string.Empty);
 
-                command.Execute(inputHandler.HandleInput(
-                    externalInput ??
-                    Console.ReadLine() ?? 
-                    string.Empty).Root);
+                string input = externalInput ?? Console.ReadLine() ?? string.Empty;
+
+                InputHistory.Add(input);
+
+                command.Execute(inputHandler.HandleInput(InputHistory.Last()).Root);
 
                 if (command.IsStdOutRedirected)
                 {
