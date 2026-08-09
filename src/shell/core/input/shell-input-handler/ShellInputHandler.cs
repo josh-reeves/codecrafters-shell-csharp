@@ -91,6 +91,8 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             input += keyPress.KeyChar;
 
+            Console.WriteLine($"[INPUT] Adding character to input string: {keyPress.KeyChar}");
+
         }
 
         Debugger?.WriteLine($"[INPUT] Exiting input loop.");
