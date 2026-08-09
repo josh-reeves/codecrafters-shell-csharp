@@ -71,8 +71,6 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
         {
             InputReceived?.Invoke(this, keyPress);
 
-            Console.Write($"{keyPress.Modifiers}{keyPress.Key} | {accept}");
-
             if (func is not null)
             {
                 Console.WriteLine($"[INPUT] Executing mapped action: {func.Method.Name}");
@@ -162,11 +160,11 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
     private Func<string, string>? RetrieveKeyMap(IDictionary<ConsoleKeyInfo, Func<string, string>> map, ConsoleKeyInfo key)
     {
-        Console.WriteLine($"[INPUT] Checking for key map: {key.Modifiers}{key.Key}");
+//        Console.WriteLine($"[INPUT] Checking for key map: {key.Modifiers}{key.Key}");
 
         foreach (ConsoleKeyInfo compare in map.Keys)
         {
-            Console.WriteLine($"[INPUT] Checking {compare.Key}");
+//            Console.WriteLine($"[INPUT] Checking {compare.Key}");
 
             if (MeetsKeyModifierMinimum(key, compare))
             {
