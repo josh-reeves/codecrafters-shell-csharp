@@ -13,7 +13,7 @@ public interface IShellInputHandler : IInputHandler
     #endregion
     
     #region Methods
-    public string CaptureInput(ConsoleKeyInfo accept, string prompt = "");
+    public string CaptureInput(ConsoleKey accept, string prompt = "");
 
     #endregion
 
