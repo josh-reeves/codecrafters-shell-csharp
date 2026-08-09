@@ -95,7 +95,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
         Debugger?.WriteLine($"[INPUT] Exiting input loop.");
 
-        Console.WriteLine();
+        Console.Write('\n');
 
         return input;
                 
