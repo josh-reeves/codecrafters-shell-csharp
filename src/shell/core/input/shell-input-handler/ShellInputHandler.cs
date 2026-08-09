@@ -69,6 +69,9 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
         
         while (!MeetsKeyModifierMinimum((keyPress = Console.ReadKey()), accept) | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
         {
+
+            
+
             InputReceived?.Invoke(this, keyPress);
 
             if (func is not null)
@@ -85,9 +88,8 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
                 
             }
 
-            input += keyPress.KeyChar;
 
-            Console.WriteLine(input);
+            input += keyPress.KeyChar;
 
         }
 
@@ -156,7 +158,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
     private Func<string, string>? RetrieveKeyMap(IDictionary<ConsoleKeyInfo, Func<string, string>> map, ConsoleKeyInfo key)
     {
-        Debugger?.WriteLine($"[INPUT] {key.Key}");
+        Console.WriteLine($"[INPUT] Checking for input map: {key.Modifiers.ToString()}{key.Key}");
 
         foreach (ConsoleKeyInfo compare in map.Keys)
         {
