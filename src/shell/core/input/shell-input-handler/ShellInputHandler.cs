@@ -79,9 +79,11 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             }
 
+                Console.WriteLine(keyPress.KeyChar);
+
+
             if (char.IsControl(keyPress.KeyChar))
             {
-                Console.WriteLine(keyPress.KeyChar);
                 
                 break;
                 
