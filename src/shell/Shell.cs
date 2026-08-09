@@ -122,7 +122,7 @@ public class Shell : IShell, IDebuggable
 
                 Console.Write(ShellIsActive ? prompt : string.Empty);
 
-                string input = externalInput ?? inputHandler.CaptureInput(ConsoleKey.Enter) ?? string.Empty;
+                string input = externalInput ?? Console.ReadLine() ?? string.Empty;
                 
                 if (string.IsNullOrWhiteSpace(input))
                 {
