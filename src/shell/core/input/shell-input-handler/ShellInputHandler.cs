@@ -87,6 +87,8 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             input += keyPress.KeyChar;
 
+            Console.WriteLine(input);
+
         }
 
         Console.WriteLine();
