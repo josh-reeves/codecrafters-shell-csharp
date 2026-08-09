@@ -84,11 +84,9 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             }
 
-            if (!char.IsControl(keyPress.KeyChar))
-            {
+
                 input += keyPress.KeyChar;
                 
-            }
 
             InputReceived?.Invoke(this, keyPress);
 
