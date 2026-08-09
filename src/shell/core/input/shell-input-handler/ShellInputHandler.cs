@@ -67,7 +67,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
         ConsoleKeyInfo keyPress;
         Func<string, string>? func = null;
         
-        while ((keyPress = Console.ReadKey()).Key != accept | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
+        while ((keyPress = Console.ReadKey()).Key != accept /*| (func = RetrieveKeyMap(KeyMap, keyPress)) is not null*/)
         {
             InputReceived?.Invoke(this, keyPress);
 
