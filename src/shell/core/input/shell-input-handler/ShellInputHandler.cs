@@ -69,12 +69,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
         
         while ((keyPress = Console.ReadKey()).Key !=  accept | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
         {
-
-            if (string.IsNullOrEmpty(keyPress.KeyChar.ToString()))
-            {
-                break;
-                
-            }
+            InputReceived?.Invoke(this, keyPress);
 
             if (func is not null)
             {
@@ -84,11 +79,16 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             }
 
-
+            if (!char.IsControl(keyPress.KeyChar))
+            {
                 input += keyPress.KeyChar;
                 
-
-            InputReceived?.Invoke(this, keyPress);
+            }
+            else
+            {
+                break;
+                
+            }
 
         }
 
@@ -157,7 +157,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
     private Func<string, string>? RetrieveKeyMap(IDictionary<ConsoleKeyInfo, Func<string, string>> map, ConsoleKeyInfo key)
     {
-        Debugger?.WriteLine($"[INPUT] {key.Key}");
+        Console.WriteLine($"[INPUT] {key.Key}");
 
         foreach (ConsoleKeyInfo compare in map.Keys)
         {
