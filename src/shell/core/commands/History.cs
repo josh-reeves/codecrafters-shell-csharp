@@ -14,11 +14,15 @@ public class History : ShellCommand
     {
         string output = string.Empty;
 
-        foreach (string str in Shell.InputHistory)
+        int i;
+        
+        for (i = 0; i < Shell.InputHistory.Count - 1; i++)
         {
-            output += str + '\n';
+            output += $"\t{i + 1} {Shell.InputHistory[i]}\n";
             
         }
+
+        output += $"\t{i + 1} {Shell.InputHistory[i]}";
 
         if (IsStdOutRedirected)
         {

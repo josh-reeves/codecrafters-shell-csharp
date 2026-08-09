@@ -2,31 +2,48 @@ using Interfaces;
 using System.Diagnostics;
 using Shell.Core.Commands;
 using Type = Shell.Core.Commands.Type;
+using Shell.Core.Input.ShellInputHandler.Parser;
+using System.Xml;
 
 namespace Shell;
 
 public class Shell : IShell, IDebuggable
 {
     #region Fields
+    private int historyCap;
     private string prompt;
 
-    private IInputHandler inputHandler;
+    private string historyFile;
+    private IShellInputHandler inputHandler;
 
     #endregion
 
     #region Constructor(s)
-    public Shell(string promptSeq, string pathVar, char commandSeparator, IInputHandler shellInputHandler)
+    public Shell(int historyCapacity, string historyFilePath, string promptSeq, string pathVar, char commandSeparator, IShellInputHandler shellInputHandler)
     {
-        prompt = promptSeq;
 
-        InputHistory = [];
+        historyCap = historyCapacity >= 0 ? historyCapacity : 0;
+        prompt = promptSeq;
+        historyFile = historyFilePath;
+        inputHandler = shellInputHandler;
+        
+        if (File.Exists(historyFile))
+        {
+            InputHistory = [..File.ReadAllLines(historyFile)];
+
+        }
+        else
+        {
+            InputHistory = [];
+            
+        }
+
         Forks = [];
         OutWriters = [];
         ErrWriters = [];
 
         PathVar = pathVar;
         CommandSeparator = commandSeparator;
-        inputHandler = shellInputHandler;
 
         Builtins = new Dictionary<string, Func<IShellCommand>>()
         {
@@ -105,11 +122,19 @@ public class Shell : IShell, IDebuggable
 
                 Console.Write(ShellIsActive ? prompt : string.Empty);
 
-                string input = externalInput ?? Console.ReadLine() ?? string.Empty;
+                string input = externalInput ?? inputHandler.CaptureInput(new ConsoleKeyInfo('\n', ConsoleKey.Enter, false, false, false)) ?? string.Empty;
+                
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    continue;
+
+                }
 
                 InputHistory.Add(input);
 
-                command.Execute(inputHandler.HandleInput(InputHistory.Last()).Root);
+                ITree commandTree = inputHandler.HandleInput(input);
+
+                command.Execute(commandTree.Root);
 
                 if (command.IsStdOutRedirected)
                 {
@@ -135,6 +160,8 @@ public class Shell : IShell, IDebuggable
 
         }
         while (ShellIsActive);
+
+        SaveHistory();
 
     }
 
@@ -250,6 +277,20 @@ public class Shell : IShell, IDebuggable
         
         return results;
         
+    }
+
+    private void SaveHistory()
+    {
+        List<string> trucatedHistory = [];
+
+        for (int i = InputHistory.Count >= historyCap ? InputHistory.Count - 1 - historyCap : 0; i <= InputHistory.Count - 1; i ++)
+        {
+            trucatedHistory.Add(InputHistory[i]);
+        
+        }
+
+        File.WriteAllLines(historyFile, trucatedHistory);
+
     }
 
     #endregion

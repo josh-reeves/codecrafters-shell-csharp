@@ -11,7 +11,7 @@ namespace Shell.Core.Input.ShellInputHandler;
 /// To facilitate this, the class also provides methods and structures that 
 ///  unify and simplify the process configuring the individual components.
 /// </summary>
-public class ShellInputHandler : IInputHandler, IDebuggable
+public class ShellInputHandler : IShellInputHandler, IDebuggable
 {
     #region Constructor(s)
     public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser, IList<IInputMap>? inputMaps = null)
@@ -20,9 +20,16 @@ public class ShellInputHandler : IInputHandler, IDebuggable
         Expander = expander;
         Parser = parser; 
         
+        KeyMap = new Dictionary<ConsoleKeyInfo, Func<string, string>>();
+
         RegisterInput(inputMaps ?? []);
 
     } 
+
+    #endregion
+
+    #region Events
+    public event EventHandler<ConsoleKeyInfo>? InputReceived;
 
     #endregion
 
@@ -48,9 +55,44 @@ public class ShellInputHandler : IInputHandler, IDebuggable
 
     public IDebugger? Debugger { get; set; }
 
+    public IDictionary<ConsoleKeyInfo, Func<string, string>> KeyMap { get; }
+
     #endregion
 
     #region Methods
+    public string CaptureInput(ConsoleKeyInfo accept)
+    {
+        string input = string.Empty;
+
+        ConsoleKeyInfo keyPress;
+        Func<string, string>? func = null;
+        
+        while (!MeetsKeyModifierMinimum((keyPress = Console.ReadKey()), accept) | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
+        {
+            if (func is not null)
+            {
+                input = func(input);
+
+                continue;
+
+            }
+
+            if (!char.IsControl(keyPress.KeyChar))
+            {
+                input += keyPress.KeyChar;
+                
+            }
+
+            InputReceived?.Invoke(this, keyPress);
+
+        }
+
+        Console.WriteLine();
+
+        return input;
+                
+    }
+
     /// <summary>
     /// Receives input and converts it into a syntax tree that can be executed
     ///  by the shell.
@@ -108,6 +150,29 @@ public class ShellInputHandler : IInputHandler, IDebuggable
         
     }
 
+    private Func<string, string>? RetrieveKeyMap(IDictionary<ConsoleKeyInfo, Func<string, string>> map, ConsoleKeyInfo key)
+    {
+        Debugger?.WriteLine($"[INPUT] {key.Key}");
+
+        foreach (ConsoleKeyInfo compare in map.Keys)
+        {
+            Debugger?.WriteLine($"[INPUT] {compare.Key}");
+
+            if (MeetsKeyModifierMinimum(key, compare))
+            {
+                return map[compare];
+                
+            }
+            
+        }
+        
+        return null;
+
+    }
+
+    private bool MeetsKeyModifierMinimum(ConsoleKeyInfo key, ConsoleKeyInfo compare)
+        => key.Key == compare.Key && (key.Modifiers & compare.Modifiers) == compare.Modifiers; 
+    
     #endregion
 
 }

@@ -40,7 +40,7 @@ class Program
         debugger = new()
         {
             Prefix = $"[{DateTime.Now} DEBUG-PID{Environment.ProcessId}] ",
-            File = "log.txt"
+            File = "debug.log"
             
         };
 
@@ -91,6 +91,8 @@ class Program
         
         ExpansionMethods.Expander = inputHandler.Expander;
 
+        inputHandler.KeyMap.Add(new ConsoleKeyInfo('\b', ConsoleKey.Backspace, false, false, false), InputMethods.Backspace);
+
         inputHandler.RegisterInput(
             [
                 ShellChars.Escape,
@@ -111,7 +113,7 @@ class Program
             ]);
 
         // Create the shell and run the REPL::
-        Shell shell = new("$ ", "PATH", ShellChars.Command.Sequence[0], inputHandler)
+        Shell shell = new(5000, "history", "$ ", "PATH", ShellChars.Command.Sequence[0], inputHandler)
         {
             InReader = streamHandle is not null ? new StreamReader(new AnonymousPipeClientStream(PipeDirection.In, streamHandle)): null,
             Debugger = debugger
