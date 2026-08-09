@@ -83,7 +83,8 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             if (char.IsControl(keyPress.KeyChar))
             {
-                     
+                Console.WriteLine($"[INPUT] Control character received.");
+
                 break;
                 
             }
