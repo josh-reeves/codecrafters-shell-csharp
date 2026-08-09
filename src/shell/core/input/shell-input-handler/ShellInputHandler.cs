@@ -69,6 +69,13 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
         
         while ((keyPress = Console.ReadKey()).Key !=  accept | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
         {
+
+            if (string.IsNullOrEmpty(keyPress.KeyChar.ToString()))
+            {
+                break;
+                
+            }
+
             if (func is not null)
             {
                 input = func(input);
