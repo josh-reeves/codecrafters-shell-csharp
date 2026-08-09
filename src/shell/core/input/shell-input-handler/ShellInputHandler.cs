@@ -71,6 +71,8 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
         {
             InputReceived?.Invoke(this, keyPress);
 
+            Console.Write($"{keyPress.Modifiers}{keyPress.Key} | {accept}");
+
             if (func is not null)
             {
                 Console.WriteLine($"[INPUT] Executing mapped action: {func.Method.Name}");
