@@ -60,14 +60,14 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
     #endregion
 
     #region Methods
-    public string CaptureInput(ConsoleKey accept, string prompt = "")
+    public string CaptureInput(ConsoleKeyInfo accept, string prompt = "")
     {
         string input = string.Empty;
 
         ConsoleKeyInfo keyPress;
         Func<string, string>? func = null;
         
-        while ((keyPress = Console.ReadKey()).Key !=  accept | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
+        while (!MeetsKeyModifierMinimum((keyPress = Console.ReadKey()), accept) | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
         {
             InputReceived?.Invoke(this, keyPress);
 
@@ -79,16 +79,13 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             }
 
-            if (!char.IsControl(keyPress.KeyChar))
-            {
-                input += keyPress.KeyChar;
-                
-            }
-            else
+            if (char.IsControl(keyPress.KeyChar))
             {
                 break;
                 
             }
+
+            input += keyPress.KeyChar;
 
         }
 
@@ -157,7 +154,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
     private Func<string, string>? RetrieveKeyMap(IDictionary<ConsoleKeyInfo, Func<string, string>> map, ConsoleKeyInfo key)
     {
-        Console.WriteLine($"[INPUT] {key.Key}");
+        Debugger?.WriteLine($"[INPUT] {key.Key}");
 
         foreach (ConsoleKeyInfo compare in map.Keys)
         {
