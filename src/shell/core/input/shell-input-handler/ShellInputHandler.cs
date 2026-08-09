@@ -60,14 +60,14 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
     #endregion
 
     #region Methods
-    public string CaptureInput(ConsoleKeyInfo accept)
+    public string CaptureInput(ConsoleKey accept, string prompt = "")
     {
         string input = string.Empty;
 
         ConsoleKeyInfo keyPress;
         Func<string, string>? func = null;
         
-        while (!MeetsKeyModifierMinimum((keyPress = Console.ReadKey()), accept) | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
+        while ((keyPress = Console.ReadKey()).Key !=  accept | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
         {
             if (func is not null)
             {

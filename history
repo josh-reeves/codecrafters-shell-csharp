@@ -1,0 +1,29 @@
+echo test
+exit
+test
+echo test
+ls
+history
+exit
+history
+exit
+history
+history
+history
+exit
+history
+history
+echo test
+history
+ls
+exit
+echo test test test test
+history
+git commit -m "Continued working on history builtin. Began converting input to a per-keypress system in order to add support for arrow keys and keyboard shortcuts."
+ls
+cd ../../..
+ls
+git add .
+git commit -m "Continued working on history builtin. Began converting input to a per-keypress system in order to eventually add support for arrow keys and keyboard shortcuts."
+git push
+exit
