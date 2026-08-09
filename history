@@ -17,13 +17,16 @@ echo test
 history
 ls
 exit
-echo test test test test
-history
-git commit -m "Continued working on history builtin. Began converting input to a per-keypress system in order to add support for arrow keys and keyboard shortcuts."
 ls
+echo banana test
+echo banana test method
+exit
+ls4
+ls
+exit
 cd ../../..
-ls
 git add .
-git commit -m "Continued working on history builtin. Began converting input to a per-keypress system in order to eventually add support for arrow keys and keyboard shortcuts."
+git commit -m "Additional troubleshooting."
 git push
+cd
 exit
