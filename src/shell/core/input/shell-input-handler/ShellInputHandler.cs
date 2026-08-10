@@ -89,7 +89,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
                 
             }
 
-            input += keyPress.KeyChar;
+            input += keyPress.KeyChar.ToString().Trim(['\r', '\n']);
 
             Debugger?.WriteLine($"[INPUT] Adding character to input string: {keyPress.KeyChar}");
 
@@ -97,7 +97,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
         Debugger?.WriteLine($"[INPUT] Exiting input loop.");
 
-        // Console.Write('\n');
+        Console.WriteLine();
 
         return input;
                 
