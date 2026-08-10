@@ -73,7 +73,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             if (func is not null)
             {
-                Console.WriteLine($"[INPUT] Executing mapped action: {func.Method.Name}");
+                Debugger?.WriteLine($"[INPUT] Executing mapped action: {func.Method.Name}");
 
                 input = func(input);
 
@@ -83,7 +83,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             if (char.IsControl(keyPress.KeyChar))
             {
-                Console.WriteLine($"[INPUT] Control character received.");
+                Debugger?.WriteLine($"[INPUT] Control character received.");
 
                 break;
                 
@@ -91,13 +91,13 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
             input += keyPress.KeyChar;
 
-            Console.WriteLine($"[INPUT] Adding character to input string: {keyPress.KeyChar}");
+            Debugger?.WriteLine($"[INPUT] Adding character to input string: {keyPress.KeyChar}");
 
         }
 
         Debugger?.WriteLine($"[INPUT] Exiting input loop.");
 
-        Console.Write('\n');
+        // Console.Write('\n');
 
         return input;
                 
