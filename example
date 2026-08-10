@@ -1,7 +1,0 @@
-[setup] echo -n "raspberry" > "/tmp/ant/f-93"
-[tester::#XK3] [setup] echo -n "grape" > "/tmp/ant/f-30"
-[tester::#XK3] [setup] echo -n "strawberry" > "/tmp/ant/f-90"
-[tester::#XK3] [setup] echo -n "pear" > "/tmp/ant/f-58"
-[tester::#XK3] [setup] echo -n "blueberry" > "/tmp/ant/f-25"
-[tester::#XK3] [setup] echo -n "apple" > "/tmp/ant/f-45"
-[your-program] $ ls /tmp/ant | tail -n 5 | head -n 3 | grep "f-58"

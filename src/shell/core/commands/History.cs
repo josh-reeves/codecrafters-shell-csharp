@@ -17,9 +17,18 @@ public class History : ShellCommand
         string output = string.Empty,
                str = string.Empty;
 
-        int i;
-        
-        for (i = 0; i < Shell.InputHistory.Count - 1; i++)
+        int i,
+            max = Shell.InputHistory.Count;
+
+        IList<string> argList = args as IList<string> ?? [];
+
+        if (int.TryParse(string.Join(' ', argList), out int temp) && temp < max)
+        {
+            max = temp;
+
+        }
+
+        for (i = 0; i < max - 1; i++)
         {
             str = $"{i + 1} {Shell.InputHistory[i]}\n";
             
