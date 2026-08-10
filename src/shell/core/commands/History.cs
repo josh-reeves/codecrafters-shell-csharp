@@ -14,41 +14,27 @@ public class History : ShellCommand
     #region Methods
     public override void Execute(object? args)
     {
-        bool reverse = false;
-        int i,
-            max = Shell.InputHistory.Count - 1;
         string output = string.Empty,
                str = string.Empty;
 
+        int i = 0,
+            max = Shell.InputHistory.Count;
+
         IList<string> argList = args as IList<string> ?? [];
 
-        if (int.TryParse(string.Join(' ', argList), out int temp))
+        if (int.TryParse(string.Join(' ', argList), out int temp) && temp <= max)
         {
-            max = temp < Shell.InputHistory.Count - 1 ? temp : max;
-            reverse = true;
+            i = max - temp;
 
         }
 
-        if (reverse)
+        while (i < max - 1)
         {
-            for (i = max; i > 0; i--)
-            {
-                str = $"{i + 1} {Shell.InputHistory[i]}\n";
-                
-                output += str.PadLeft(indent + str.Length);
-                
-            }
-
-        }
-        else
-        {
-            for (i = 0; i < max; i++)
-            {
-                str = $"{i + 1} {Shell.InputHistory[i]}\n";
-                
-                output += str.PadLeft(indent + str.Length);
-                
-            }            
+            str = $"{i + 1} {Shell.InputHistory[i]}\n";
+            
+            output += str.PadLeft(indent + str.Length);
+            
+            i++;
 
         }
             
