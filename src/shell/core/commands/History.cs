@@ -4,6 +4,8 @@ namespace Shell.Core.Commands;
 
 public class History : ShellCommand
 {
+    const int indent = 4;
+
     #region Constructor
     public History (IShell shell) : base(shell) {}
 
@@ -18,7 +20,7 @@ public class History : ShellCommand
         
         for (i = 0; i < Shell.InputHistory.Count - 1; i++)
         {
-            output += $"\t{i + 1} {Shell.InputHistory[i]}\n";
+            output += $"{i + 1} {Shell.InputHistory[i]}\n".PadLeft(indent);
             
         }
 

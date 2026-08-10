@@ -100,7 +100,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
         Console.WriteLine();
 
         return input;
-                
+                        
     }
 
     /// <summary>
