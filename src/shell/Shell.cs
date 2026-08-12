@@ -63,6 +63,8 @@ public class Shell : IShell, IDebuggable
         inputHandler.Reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.DownArrow, false, false, false), controls.RetrieveHistoryEntry);
         inputHandler.Reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.Enter, false, false, false), controls.Enter);
 
+        inputHandler.Reader.Prompt = prompt;
+
     }
 
     #endregion
@@ -131,7 +133,7 @@ public class Shell : IShell, IDebuggable
 
                 historyIndex = InputHistory.Count - 1;
 
-                InputHistory[InputHistory.Count - 1] = externalInput ?? Reader.Read(prompt) ?? string.Empty;
+                InputHistory[InputHistory.Count - 1] = externalInput ?? inputHandler.Reader.Read(prompt) ?? string.Empty;
                 
                 if (string.IsNullOrWhiteSpace(InputHistory[InputHistory.Count - 1]))
                 {
@@ -334,29 +336,29 @@ public class Shell : IShell, IDebuggable
 
         public string RetrieveHistoryEntry(string input, ConsoleKeyInfo keyInfo)
         {
-            if (keyInfo.Key == ConsoleKey.UpArrow && historyIndex == InputHistory.Count - 1)
+            if (keyInfo.Key == ConsoleKey.UpArrow && HistoryIndex == history.Count - 1)
             {
-                InputHistory[InputHistory.Count - 1] = input;
+                history[history.Count - 1] = input;
                 
             }
 
-            if (keyInfo.Key == ConsoleKey.UpArrow && historyIndex > 0)
+            if (keyInfo.Key == ConsoleKey.UpArrow && HistoryIndex > 0)
             {
-                historyIndex--;
+                HistoryIndex--;
 
-                input = InputHistory[historyIndex];            
+                input = history[HistoryIndex];            
 
             }
 
-            if (keyInfo.Key == ConsoleKey.DownArrow && historyIndex < InputHistory.Count - 1)
+            if (keyInfo.Key == ConsoleKey.DownArrow && HistoryIndex < history.Count - 1)
             {
-                historyIndex++;
+                HistoryIndex++;
 
-                input = InputHistory[historyIndex];
+                input = history[HistoryIndex];
                 
             }
 
-            Reader.ClearLine(prompt.Length);
+            Reader.ClearLine(Reader.Prompt.Length);
 
             Console.Write(input);
 
