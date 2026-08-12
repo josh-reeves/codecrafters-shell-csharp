@@ -14,26 +14,24 @@ namespace Shell.Core.Input.ShellInputHandler;
 public class ShellInputHandler : IShellInputHandler, IDebuggable
 {
     #region Constructor(s)
-    public ShellInputHandler(ILexer lexer, IExpander expander, IParser parser, IList<IInputMap>? inputMaps = null)
+    public ShellInputHandler(IShellReader reader, ILexer lexer, IExpander expander, IParser parser, IList<IInputMap>? inputMaps = null)
     {
+        Reader = reader;
         Lexer = lexer;
         Expander = expander;
         Parser = parser; 
         
-        KeyMap = new Dictionary<ConsoleKeyInfo, Func<string, string>>();
-
         RegisterInput(inputMaps ?? []);
 
     } 
 
     #endregion
 
-    #region Events
-    public event EventHandler<ConsoleKeyInfo>? InputReceived;
 
-    #endregion
 
     #region Properites
+    public IShellReader Reader { get; set; }
+
     /// <summary>
     /// The Lexer converts raw input into a queue of tokens that can be easily
     ///  interpreted regardless of any syntactic idiosyncrasies.
@@ -55,53 +53,9 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
     public IDebugger? Debugger { get; set; }
 
-    public IDictionary<ConsoleKeyInfo, Func<string, string>> KeyMap { get; }
-
     #endregion
 
     #region Methods
-    public string CaptureInput(ConsoleKey accept, string prompt = "")
-    {
-        string input = string.Empty;
-
-        ConsoleKeyInfo keyPress;
-        Func<string, string>? func = null;
-        
-        while ((keyPress = Console.ReadKey()).Key != accept | (func = RetrieveKeyMap(KeyMap, keyPress)) is not null)
-        {
-            InputReceived?.Invoke(this, keyPress);
-
-            if (func is not null)
-            {
-                Debugger?.WriteLine($"[INPUT] Executing mapped action: {func.Method.Name}");
-
-                input = func(input);
-
-                continue;
-
-            }
-
-            if (keyPress.KeyChar == '\0')
-            {
-                Debugger?.WriteLine($"[INPUT] Control character received.");
-
-                break;
-                
-            }
-
-            input += keyPress.KeyChar.ToString().Trim(['\r', '\n']);
-
-            Debugger?.WriteLine($"[INPUT] Adding character to input string: {keyPress.KeyChar}");
-
-        }
-
-        Debugger?.WriteLine($"[INPUT] Exiting input loop.");
-
-        Console.WriteLine();
-
-        return input;
-                        
-    }
 
     /// <summary>
     /// Receives input and converts it into a syntax tree that can be executed
@@ -111,7 +65,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
     /// <returns>A syntax tree representing the provided input.</returns>
     public ITree HandleInput(string input)
     {
-        Debugger?.WriteLine($"REPL: Handling input: {input}");
+        Debugger?.WriteLine($"Handling input: {input}", ["INPUT"]);
 
         Queue<IToken> tokenizedInput = Lexer?.Tokenize(input) ?? [];
 
@@ -119,7 +73,7 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
 
         ITree parsedInput = Parser.Parse(tokenizedInput);
         
-        Debugger?.WriteLine($"REPL: Input handling complete.");
+        Debugger?.WriteLine($"Input handling complete.", ["INPUT"]);
         
         return parsedInput;
 
@@ -159,29 +113,6 @@ public class ShellInputHandler : IShellInputHandler, IDebuggable
         }
         
     }
-
-    private Func<string, string>? RetrieveKeyMap(IDictionary<ConsoleKeyInfo, Func<string, string>> map, ConsoleKeyInfo key)
-    {
-//        Console.WriteLine($"[INPUT] Checking for key map: {key.Modifiers}{key.Key}");
-
-        foreach (ConsoleKeyInfo compare in map.Keys)
-        {
-//            Console.WriteLine($"[INPUT] Checking {compare.Key}");
-
-            if (MeetsKeyModifierMinimum(key, compare))
-            {
-                return map[compare];
-                
-            }
-            
-        }
-        
-        return null;
-
-    }
-
-    private bool MeetsKeyModifierMinimum(ConsoleKeyInfo key, ConsoleKeyInfo compare)
-        => key.Key == compare.Key && (key.Modifiers & compare.Modifiers) == compare.Modifiers; 
     
     #endregion
 

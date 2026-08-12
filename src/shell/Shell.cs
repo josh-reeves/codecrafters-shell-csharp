@@ -10,11 +10,12 @@ namespace Shell;
 public class Shell : IShell, IDebuggable
 {
     #region Fields
-    private int historyCap;
-    private string prompt;
+    private readonly int historyCap;
+    private int historyIndex;
+    private readonly string prompt;
 
-    private string historyFile;
-    private IShellInputHandler inputHandler;
+    private readonly string historyFile;
+    private readonly IShellInputHandler inputHandler;
 
     #endregion
 
@@ -45,6 +46,8 @@ public class Shell : IShell, IDebuggable
         PathVar = pathVar;
         CommandSeparator = commandSeparator;
 
+        Controls controls = new(this, inputHandler.Reader);
+
         Builtins = new Dictionary<string, Func<IShellCommand>>()
         {
             {"echo", () => new Echo(this)},
@@ -55,6 +58,10 @@ public class Shell : IShell, IDebuggable
             {"history", () => new History(this)}
         
         };
+
+        inputHandler.Reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.UpArrow, false, false, false), controls.RetrieveHistoryEntry);
+        inputHandler.Reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.DownArrow, false, false, false), controls.RetrieveHistoryEntry);
+        inputHandler.Reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.Enter, false, false, false), controls.Enter);
 
     }
 
@@ -120,19 +127,19 @@ public class Shell : IShell, IDebuggable
 
                 };
 
-                Console.Write(ShellIsActive ? prompt : string.Empty);
+                InputHistory.Add(string.Empty);
 
-                string input = externalInput ?? Console.ReadLine() ?? string.Empty;
+                historyIndex = InputHistory.Count - 1;
+
+                InputHistory[InputHistory.Count - 1] = externalInput ?? Reader.Read(prompt) ?? string.Empty;
                 
-                if (string.IsNullOrWhiteSpace(input))
+                if (string.IsNullOrWhiteSpace(InputHistory[InputHistory.Count - 1]))
                 {
                     continue;
 
                 }
 
-                InputHistory.Add(input);
-
-                ITree commandTree = inputHandler.HandleInput(input);
+                ITree commandTree = inputHandler.HandleInput(InputHistory[InputHistory.Count - 1]);
 
                 command.Execute(commandTree.Root);
 
@@ -294,7 +301,75 @@ public class Shell : IShell, IDebuggable
     }
 
     #endregion
-        
+
+    #region Classes & Structs
+    private class Controls
+    {
+        private IList<string> history => Shell.InputHistory;
+
+        public Controls(IShell shell, IShellReader reader)
+        {
+            Shell = shell;
+            Reader = reader;
+            
+        }
+
+        #region Properties
+        public int HistoryIndex { get; set; }
+
+        public IShell Shell { get; set; }
+
+        public IShellReader Reader { get; set; }
+
+        #endregion
+
+        #region Methods
+        public string Enter(string input, ConsoleKeyInfo keyInfo)
+        {
+            Reader.Active = false;
+            
+            return input;
+
+        }
+
+        public string RetrieveHistoryEntry(string input, ConsoleKeyInfo keyInfo)
+        {
+            if (keyInfo.Key == ConsoleKey.UpArrow && historyIndex == InputHistory.Count - 1)
+            {
+                InputHistory[InputHistory.Count - 1] = input;
+                
+            }
+
+            if (keyInfo.Key == ConsoleKey.UpArrow && historyIndex > 0)
+            {
+                historyIndex--;
+
+                input = InputHistory[historyIndex];            
+
+            }
+
+            if (keyInfo.Key == ConsoleKey.DownArrow && historyIndex < InputHistory.Count - 1)
+            {
+                historyIndex++;
+
+                input = InputHistory[historyIndex];
+                
+            }
+
+            Reader.ClearLine(prompt.Length);
+
+            Console.Write(input);
+
+            return input;
+            
+        }
+
+        #endregion
+    
+    }
+
+    #endregion
+
 }
 
     

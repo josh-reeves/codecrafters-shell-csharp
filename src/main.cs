@@ -1,5 +1,6 @@
 using System.IO.Pipes;
 using Interfaces;
+using Shell.Core.Input.Reader;
 using Shell.Core.Input.ShellInputHandler;
 using Shell.Core.Input.ShellInputHandler.Expander;
 using Shell.Core.Input.ShellInputHandler.Lexer;
@@ -34,18 +35,7 @@ class Program
     {
         string? command = null,
                 streamHandle = null;
-
-        Debugger? debugger = null;
-#if DEBUG
-        debugger = new()
-        {
-            Prefix = $"[{DateTime.Now} DEBUG-PID{Environment.ProcessId}] ",
-            File = "debug.log"
-            
-        };
-
-        debugger.WriteLine($"Launching PID {Environment.ProcessId}.");
-#endif
+        
         // Process external arguments:
         for (int i = 0; i <= args.Length - 1; i++)
         {
@@ -66,9 +56,28 @@ class Program
 
         }
 
+        Debugger? debugger = null;
+
+#if DEBUG
+        debugger = new()
+        {
+            Prefix = $"[{DateTime.Now} DEBUG-PID{Environment.ProcessId}] ",
+            File = "debug.log"
+            
+        };
+
+        debugger.WriteLine($"Launching PID {Environment.ProcessId}.");
+#endif
+
         ParsingMethods.Debugger = debugger;
 
         // Build the dependecies for the shell:
+        ShellReader reader = new()
+        {
+            Debugger = debugger
+
+        };
+
         LexerDefaultState defaultState = new();
         
         LexerStateController stateController = new(
@@ -78,12 +87,18 @@ class Program
                 { defaultState, () => new ShellToken(TokenType.Word) }
                 
             })
+            {
+                Debugger = debugger
+                
+            };
+
+        Lexer lexer = new(stateController)
         {
             Debugger = debugger
-            
+
         };
 
-        ShellInputHandler inputHandler = new(new Lexer(stateController) {Debugger = debugger}, new Expander() {Debugger = debugger}, new Parser(ParsingMethods.Parse))
+        ShellInputHandler inputHandler = new(reader, new Lexer(stateController) {Debugger = debugger}, new Expander() {Debugger = debugger}, new Parser(ParsingMethods.Parse))
         {
             Debugger = debugger,
             
@@ -91,7 +106,7 @@ class Program
         
         ExpansionMethods.Expander = inputHandler.Expander;
 
-        inputHandler.KeyMap.Add(new ConsoleKeyInfo('\b', ConsoleKey.Backspace, false, false, false), InputMethods.Backspace);
+        reader.KeyMap.Add(new ConsoleKeyInfo('\b', ConsoleKey.Backspace, false, false, false), InputMethods.Backspace);
 
         inputHandler.RegisterInput(
             [
@@ -127,4 +142,5 @@ class Program
     }
 
 }
+
 

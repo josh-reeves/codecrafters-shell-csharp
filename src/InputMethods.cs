@@ -10,7 +10,7 @@ public static class InputMethods
     #endregion
 
     #region Methods   
-    public static string Backspace(string input)
+    public static string Backspace(string input, ConsoleKeyInfo info)
     {
         if (input.Length > 0)
         {

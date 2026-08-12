@@ -10,9 +10,9 @@ public interface IDebugger
     #endregion
 
     #region Methods
-    public void Write(string msg);
+    public void Write(string msg, string[]? tags = null);
 
-    public void WriteLine(string msg);
+    public void WriteLine(string msg, string[]? tags = null);
 
     #endregion
 
