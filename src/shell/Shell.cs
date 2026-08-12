@@ -11,8 +11,8 @@ public class Shell : IShell, IDebuggable
 {
     #region Fields
     private readonly int historyCap;
-    private int historyIndex;
     private readonly string prompt;
+    private readonly Controls controls;
 
     private readonly string historyFile;
     private readonly IShellInputHandler inputHandler;
@@ -46,7 +46,7 @@ public class Shell : IShell, IDebuggable
         PathVar = pathVar;
         CommandSeparator = commandSeparator;
 
-        Controls controls = new(this, inputHandler.Reader);
+        controls = new(this, inputHandler.Reader);
 
         Builtins = new Dictionary<string, Func<IShellCommand>>()
         {
@@ -131,7 +131,7 @@ public class Shell : IShell, IDebuggable
 
                 InputHistory.Add(string.Empty);
 
-                historyIndex = InputHistory.Count - 1;
+                controls.HistoryIndex = InputHistory.Count - 1;
 
                 InputHistory[InputHistory.Count - 1] = externalInput ?? inputHandler.Reader.Read(prompt) ?? string.Empty;
                 
