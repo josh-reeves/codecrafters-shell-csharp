@@ -115,7 +115,7 @@ public class Shell : IShell, IDebuggable
     {
         ShellIsActive = externalInput == null;
         
-        Debugger?.WriteLine($"REPL: Launching Shell. Interactive mode: {ShellIsActive}");
+        Debugger?.WriteLine($"Launching Shell. Interactive mode: {ShellIsActive}", ["REPL"]);
         
         do
         {
@@ -159,7 +159,7 @@ public class Shell : IShell, IDebuggable
             catch (Exception ex)
             {
                 Console.WriteLine("An unhandled exception occured.");
-                Debugger?.WriteLine($"EXCEPTION: {ex.Message}");
+                Debugger?.WriteLine(ex.Message, ["EXCEPTION"]);
 
             }
 
@@ -176,7 +176,7 @@ public class Shell : IShell, IDebuggable
     {
         while (await reader.ReadLineAsync() is string output)
         {
-            Debugger?.WriteLine($"REPL: Redirecting {output} to {writers.Count()} StreamWriters.");
+            Debugger?.WriteLine($"Redirecting {output} to {writers.Count()} StreamWriters.", ["REPL"]);
 
             foreach (StreamWriter writer in writers)
             {
@@ -347,6 +347,8 @@ public class Shell : IShell, IDebuggable
 
         public string RetrieveHistoryEntry(string input, ConsoleKeyInfo keyInfo)
         {
+            int inLength = input.Length;
+
             if (keyInfo.Key == ConsoleKey.UpArrow && HistoryIndex == history.Count - 1)
             {
                 history[history.Count - 1] = input;
@@ -369,8 +371,7 @@ public class Shell : IShell, IDebuggable
                 
             }
 
-            Reader.ClearLine(Reader.Prompt.Length);
-
+            Reader.ClearLine();
             Console.Write(input);
 
             return input;

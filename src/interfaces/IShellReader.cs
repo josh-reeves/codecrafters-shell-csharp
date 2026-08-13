@@ -19,10 +19,9 @@ public interface IShellReader
     #region Methods
     public string Read(string prompt = "");
 
-    public void ClearLine(int startPos = 0)
-    {
-        
-    }
+    public void ClearLine();
+
+    public void Insert(string input, int startPos = 0);
 
     #endregion
 
