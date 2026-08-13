@@ -68,7 +68,7 @@ class Program
         ParsingMethods.Debugger = debugger;
 
         // Build the dependecies for the shell:
-        ShellReader reader = new()
+        ShellReader reader = new("$ ")
         {
             Debugger = debugger
 
@@ -122,7 +122,7 @@ class Program
             ]);
 
         // Create the shell and run the REPL::
-        Shell shell = new(5000, "history", "$ ", "PATH", ShellChars.Command.Sequence[0], inputHandler)
+        Shell shell = new(5000, "history", "PATH", ShellChars.Command.Sequence[0], inputHandler)
         {
             InReader = streamHandle is not null ? new StreamReader(new AnonymousPipeClientStream(PipeDirection.In, streamHandle)): null,
             Debugger = debugger

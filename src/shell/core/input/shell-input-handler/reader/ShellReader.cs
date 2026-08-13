@@ -4,9 +4,9 @@ namespace Shell.Core.Input.Reader;
 
 public class ShellReader : IShellReader, IDebuggable
 {
-    public ShellReader(IDictionary<ConsoleKeyInfo, Func<string, ConsoleKeyInfo, string>>? keyMap = null)
+    public ShellReader(string prompt = "", IDictionary<ConsoleKeyInfo, Func<string, ConsoleKeyInfo, string>>? keyMap = null)
     {
-        Prompt = string.Empty;
+        Prompt = prompt;
         
         KeyMap = keyMap ?? new Dictionary<ConsoleKeyInfo, Func<string, ConsoleKeyInfo, string>>();
         
@@ -33,6 +33,12 @@ public class ShellReader : IShellReader, IDebuggable
     {
         string input = string.Empty;
 
+        if (string.IsNullOrEmpty(prompt))
+        {
+            prompt = Prompt;
+
+        }
+
         Console.Write(prompt);
 
         Active = true;
@@ -40,6 +46,12 @@ public class ShellReader : IShellReader, IDebuggable
         while (Active)
         {
             ConsoleKeyInfo keyInfo = Console.ReadKey(intercept: true);
+
+            if (keyInfo.Key == ConsoleKey.UpArrow)
+            {
+                Console.WriteLine("test");
+                
+            }
 
             BroadcastInput(keyInfo);
 

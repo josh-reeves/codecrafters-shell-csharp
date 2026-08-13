@@ -11,8 +11,7 @@ public class Shell : IShell, IDebuggable
 {
     #region Fields
     private readonly int historyCap;
-    private readonly string prompt,
-                            historyFile;
+    private readonly string historyFile;
     
     private IShellReader reader => inputHandler.Reader;
     private readonly ShellControls controls;
@@ -21,11 +20,10 @@ public class Shell : IShell, IDebuggable
     #endregion
 
     #region Constructor(s)
-    public Shell(int historyCapacity, string historyFilePath, string promptSeq, string pathVar, char commandSeparator, IShellInputHandler shellInputHandler)
+    public Shell(int historyCapacity, string historyFilePath, string pathVar, char commandSeparator, IShellInputHandler shellInputHandler)
     {
 
         historyCap = historyCapacity >= 0 ? historyCapacity : 0;
-        prompt = promptSeq;
         historyFile = historyFilePath;
         inputHandler = shellInputHandler;
         
@@ -64,8 +62,6 @@ public class Shell : IShell, IDebuggable
         reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.Backspace, false, false, false), controls.Backspace);
         reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.UpArrow, false, false, false), controls.RetrieveHistoryEntry);
         reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.DownArrow, false, false, false), controls.RetrieveHistoryEntry);
-
-        inputHandler.Reader.Prompt = prompt;
 
     }
 
@@ -135,7 +131,7 @@ public class Shell : IShell, IDebuggable
 
                 controls.HistoryIndex = InputHistory.Count - 1;
 
-                InputHistory[InputHistory.Count - 1] = externalInput ?? inputHandler.Reader.Read(prompt) ?? string.Empty;
+                InputHistory[InputHistory.Count - 1] = externalInput ?? reader.Read() ?? string.Empty;
                 
                 if (string.IsNullOrWhiteSpace(InputHistory[InputHistory.Count - 1]))
                 {
