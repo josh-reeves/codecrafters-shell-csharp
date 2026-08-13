@@ -47,15 +47,18 @@ public class ShellReader : IShellReader, IDebuggable
         {
             ConsoleKeyInfo keyInfo = Console.ReadKey(intercept: true);
 
-            if (keyInfo.Key == ConsoleKey.UpArrow)
-            {
-                Console.WriteLine("test");
-                
-            }
 
             BroadcastInput(keyInfo);
 
             Func<string, ConsoleKeyInfo, string>? func = RetrieveKeyMap(KeyMap, keyInfo);
+
+
+            if (keyInfo.Key == ConsoleKey.UpArrow)
+            {
+                Console.WriteLine("test");
+                Console.WriteLine(func == null);
+                
+            }
 
             if (func is not null)
             {
