@@ -11,11 +11,12 @@ public class Shell : IShell, IDebuggable
 {
     #region Fields
     private readonly int historyCap;
-    private readonly string prompt;
-    private readonly Controls controls;
-
-    private readonly string historyFile;
-    private readonly IShellInputHandler inputHandler;
+    private readonly string prompt,
+                            historyFile;
+    
+    private IShellReader reader => inputHandler.Reader;
+    private readonly ShellControls controls;
+    private readonly IShellInputHandler inputHandler;       
 
     #endregion
 
@@ -46,8 +47,6 @@ public class Shell : IShell, IDebuggable
         PathVar = pathVar;
         CommandSeparator = commandSeparator;
 
-        controls = new(this, inputHandler.Reader);
-
         Builtins = new Dictionary<string, Func<IShellCommand>>()
         {
             {"echo", () => new Echo(this)},
@@ -59,9 +58,12 @@ public class Shell : IShell, IDebuggable
         
         };
 
-        inputHandler.Reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.UpArrow, false, false, false), controls.RetrieveHistoryEntry);
-        inputHandler.Reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.DownArrow, false, false, false), controls.RetrieveHistoryEntry);
-        inputHandler.Reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.Enter, false, false, false), controls.Enter);
+        controls = new(this, inputHandler.Reader);
+
+        reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.Enter, false, false, false), controls.Enter);
+        reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.Backspace, false, false, false), controls.Backspace);
+        reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.UpArrow, false, false, false), controls.RetrieveHistoryEntry);
+        reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.DownArrow, false, false, false), controls.RetrieveHistoryEntry);
 
         inputHandler.Reader.Prompt = prompt;
 
@@ -305,11 +307,11 @@ public class Shell : IShell, IDebuggable
     #endregion
 
     #region Classes & Structs
-    private class Controls
+    private class ShellControls
     {
         private IList<string> history => Shell.InputHistory;
 
-        public Controls(IShell shell, IShellReader reader)
+        public ShellControls(IShell shell, IShellReader reader)
         {
             Shell = shell;
             Reader = reader;
@@ -330,6 +332,19 @@ public class Shell : IShell, IDebuggable
         {
             Reader.Active = false;
             
+            return input;
+
+        }
+
+        public string Backspace(string input, ConsoleKeyInfo info)
+        {
+            if (input.Length > 0)
+            {
+                input = input.Remove(input.Length - 1);
+                Console.Write("\b \b");
+            
+            }
+
             return input;
 
         }

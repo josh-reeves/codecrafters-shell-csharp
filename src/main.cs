@@ -56,10 +56,7 @@ class Program
 
         }
 
-        Debugger? debugger = null;
-
-#if DEBUG
-        debugger = new()
+        Debugger debugger = debugger = new()
         {
             Prefix = $"[{DateTime.Now} DEBUG-PID{Environment.ProcessId}] ",
             File = "debug.log"
@@ -67,7 +64,6 @@ class Program
         };
 
         debugger.WriteLine($"Launching PID {Environment.ProcessId}.");
-#endif
 
         ParsingMethods.Debugger = debugger;
 
@@ -105,8 +101,6 @@ class Program
         };
         
         ExpansionMethods.Expander = inputHandler.Expander;
-
-        reader.KeyMap.Add(new ConsoleKeyInfo('\b', ConsoleKey.Backspace, false, false, false), InputMethods.Backspace);
 
         inputHandler.RegisterInput(
             [
