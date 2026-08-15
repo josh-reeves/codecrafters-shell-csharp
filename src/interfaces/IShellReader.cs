@@ -3,11 +3,13 @@ namespace Interfaces;
 public interface IShellReader
 {
     #region Properties
-    public bool Active { get; set; }
+    public bool IsReading { get; set; }
 
     public string Prompt { get; set; }
 
-    public IDictionary<ConsoleKeyInfo, Func<string, ConsoleKeyInfo, string>> KeyMap { get; }
+    public ITextCursor Cursor { get; }
+
+    public IDictionary<ConsoleKeyInfo, Func<string, string>> KeyMap { get; }
     
     #endregion
 
@@ -17,7 +19,7 @@ public interface IShellReader
     #endregion
     
     #region Methods
-    public string Read(string prompt = "");
+    public string Read(string? prompt = null);
 
     public void ClearLine();
 

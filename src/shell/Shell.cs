@@ -10,8 +10,9 @@ namespace Shell;
 public class Shell : IShell, IDebuggable
 {
     #region Fields
-    private readonly int historyCap;
-    private readonly string historyFile;
+    private readonly int histCap;
+    private readonly string histFile;
+    private int histIndex;
     
     private IShellReader reader => inputHandler.Reader;
     private readonly ShellControls controls;
@@ -23,13 +24,13 @@ public class Shell : IShell, IDebuggable
     public Shell(int historyCapacity, string historyFilePath, string pathVar, char commandSeparator, IShellInputHandler shellInputHandler)
     {
 
-        historyCap = historyCapacity >= 0 ? historyCapacity : 0;
-        historyFile = historyFilePath;
+        histCap = historyCapacity >= 0 ? historyCapacity : 0;
+        histFile = historyFilePath;
         inputHandler = shellInputHandler;
         
-        if (File.Exists(historyFile))
+        if (File.Exists(histFile))
         {
-            InputHistory = [..File.ReadAllLines(historyFile)];
+            InputHistory = [..File.ReadAllLines(histFile)];
 
         }
         else
@@ -56,12 +57,12 @@ public class Shell : IShell, IDebuggable
         
         };
 
-        controls = new(this, inputHandler.Reader);
+        controls = new(this);
 
         reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.Enter, false, false, false), controls.Enter);
         reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.Backspace, false, false, false), controls.Backspace);
-        reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.UpArrow, false, false, false), controls.RetrieveHistoryEntry);
-        reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.DownArrow, false, false, false), controls.RetrieveHistoryEntry);
+        reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.UpArrow, false, false, false), controls.UpArrow);
+        reader.KeyMap.Add(new ConsoleKeyInfo('\0', ConsoleKey.DownArrow, false, false, false), controls.DownArrow);
 
     }
 
@@ -129,12 +130,14 @@ public class Shell : IShell, IDebuggable
 
                 InputHistory.Add(string.Empty);
 
-                controls.HistoryIndex = InputHistory.Count - 1;
+                histIndex = InputHistory.Count - 1;
 
                 InputHistory[InputHistory.Count - 1] = externalInput ?? reader.Read() ?? string.Empty;
                 
                 if (string.IsNullOrWhiteSpace(InputHistory[InputHistory.Count - 1]))
                 {
+                    InputHistory.RemoveAt(InputHistory.Count - 1);
+                    
                     continue;
 
                 }
@@ -290,49 +293,47 @@ public class Shell : IShell, IDebuggable
     {
         List<string> trucatedHistory = [];
 
-        for (int i = InputHistory.Count >= historyCap ? InputHistory.Count - 1 - historyCap : 0; i <= InputHistory.Count - 1; i ++)
+        for (int i = InputHistory.Count >= histCap ? InputHistory.Count - 1 - histCap : 0; i <= InputHistory.Count - 1; i ++)
         {
             trucatedHistory.Add(InputHistory[i]);
         
         }
 
-        File.WriteAllLines(historyFile, trucatedHistory);
+        File.WriteAllLines(histFile, trucatedHistory);
 
     }
 
     #endregion
 
     #region Classes & Structs
-    private class ShellControls
+    private class ShellControls : IShellControls
     {
-        private IList<string> history => Shell.InputHistory;
+        private Shell shell;
+        private int histIndex => shell.histIndex;
+        private IList<string> history => shell.InputHistory;
 
-        public ShellControls(IShell shell, IShellReader reader)
+        public ShellControls(IShell parent)
         {
-            Shell = shell;
-            Reader = reader;
+            shell = (Shell)parent;
+            Reader = shell.reader;
             
         }
 
         #region Properties
-        public int HistoryIndex { get; set; }
-
-        public IShell Shell { get; set; }
-
         public IShellReader Reader { get; set; }
 
         #endregion
 
         #region Methods
-        public string Enter(string input, ConsoleKeyInfo keyInfo)
+        public string Enter(string input)
         {
-            Reader.Active = false;
+            Reader.IsReading = false;
             
             return input;
 
         }
 
-        public string Backspace(string input, ConsoleKeyInfo info)
+        public string Backspace(string input)
         {
             if (input.Length > 0)
             {
@@ -345,29 +346,36 @@ public class Shell : IShell, IDebuggable
 
         }
 
-        public string RetrieveHistoryEntry(string input, ConsoleKeyInfo keyInfo)
+        public string UpArrow(string input)
         {
-            int inLength = input.Length;
-
-            if (keyInfo.Key == ConsoleKey.UpArrow && HistoryIndex == history.Count - 1)
+            if (histIndex == history.Count - 1)
             {
                 history[history.Count - 1] = input;
                 
             }
 
-            if (keyInfo.Key == ConsoleKey.UpArrow && HistoryIndex > 0)
+            if (histIndex > 0)
             {
-                HistoryIndex--;
+                shell.histIndex--;
 
-                input = history[HistoryIndex];            
+                input = history[histIndex];            
 
             }
 
-            if (keyInfo.Key == ConsoleKey.DownArrow && HistoryIndex < history.Count - 1)
-            {
-                HistoryIndex++;
+            Reader.ClearLine();
+            Console.Write(input);
 
-                input = history[HistoryIndex];
+            return input;
+
+        }
+
+        public string DownArrow(string input)
+        {
+            if (histIndex < history.Count - 1)
+            {
+                shell.histIndex++;
+
+                input = history[histIndex];
                 
             }
 

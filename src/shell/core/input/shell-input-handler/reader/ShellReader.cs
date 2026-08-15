@@ -1,3 +1,4 @@
+using System.Text;
 using Interfaces;
 
 namespace Shell.Core.Input.Reader;
@@ -6,15 +7,15 @@ public class ShellReader : IShellReader, IDebuggable
 {
     private string input;
 
-    private Cursor cursor;
-
-    public ShellReader(string prompt = "", IDictionary<ConsoleKeyInfo, Func<string, ConsoleKeyInfo, string>>? keyMap = null)
+    public ShellReader(string prompt = "", IDictionary<ConsoleKeyInfo, Func<string, string>>? keyMap = null)
     {
         input = string.Empty;
 
         Prompt = prompt;
         
-        KeyMap = keyMap ?? new Dictionary<ConsoleKeyInfo, Func<string, ConsoleKeyInfo, string>>();
+        KeyMap = keyMap ?? new Dictionary<ConsoleKeyInfo, Func<string, string>>();
+
+        Cursor = new TextCursor();
         
     }
 
@@ -24,44 +25,42 @@ public class ShellReader : IShellReader, IDebuggable
     #endregion
 
     #region Properties
-    public bool Active { get; set; }
+    public bool IsReading { get; set; }
 
     public string Prompt { get; set; }
 
-    public IDictionary<ConsoleKeyInfo, Func<string, ConsoleKeyInfo, string>> KeyMap { get; }
+    public ITextCursor Cursor { get; }
+
+    public IDictionary<ConsoleKeyInfo, Func<string, string>> KeyMap { get; }
 
     public IDebugger? Debugger { get; set; }
 
     #endregion
 
     #region Methods
-    public string Read(string prompt = "")
+    public string Read(string? prompt = null)
     {
         input = string.Empty;
 
-        if (string.IsNullOrEmpty(prompt))
-        {
-            prompt = Prompt;
-
-        }
-
+        prompt ??= Prompt;
+        
         Console.Write(prompt);
 
-        Active = true;
+        IsReading = true;
 
-        while (Active)
+        while (IsReading)
         {
             ConsoleKeyInfo keyInfo = Console.ReadKey(intercept: true);
 
             BroadcastInput(keyInfo);
 
-            Func<string, ConsoleKeyInfo, string>? func = RetrieveKeyMap(KeyMap, keyInfo);
+            Func<string, string>? func = RetrieveKeyMap(KeyMap, keyInfo);
 
             if (func is not null)
             {
                 Debugger?.WriteLine($"Executing mapped action: {func.Method.Name}", ["INPUT"]);
 
-                input = func(input, keyInfo);
+                input = func(input);
 
                 continue;
 
@@ -95,7 +94,7 @@ public class ShellReader : IShellReader, IDebuggable
 
         }
 
-        cursor.MoveLeft(input.Length);
+        Cursor.MoveLeft(input.Length);
 
         for(int i = 1; i <= input.Length; i++)
         {
@@ -103,21 +102,27 @@ public class ShellReader : IShellReader, IDebuggable
 
         }
 
-        cursor.MoveLeft(input.Length);
+        Cursor.MoveLeft(input.Length);
 
     }
 
-    public void Insert(string input, int startPos = 0)
+    public void Insert(string insert, int startPos = 0)
     {
-        int top = Console.GetCursorPosition().Top;
+        if (input.Length <= 0)
+        {
+            Console.Write(insert);
 
-        Console.SetCursorPosition(startPos, top);
+            return;
 
-        Console.Write(input);
+        }
+        
+        Cursor.MoveLeft(input.Length - startPos);
+
+        Console.Write(insert);
 
     }
 
-    private Func<string, ConsoleKeyInfo, string>? RetrieveKeyMap(IDictionary<ConsoleKeyInfo, Func<string, ConsoleKeyInfo, string>> map, ConsoleKeyInfo keyInfo)
+    private Func<string, string>? RetrieveKeyMap(IDictionary<ConsoleKeyInfo, Func<string, string>> map, ConsoleKeyInfo keyInfo)
     {
         foreach (ConsoleKeyInfo compare in map.Keys)
         {
@@ -158,12 +163,12 @@ public class ShellReader : IShellReader, IDebuggable
     #endregion
 
     #region Structs
-    private struct Cursor : ICursor
+    private struct TextCursor : ITextCursor
     {
         private const char Escape = '\u001B';
         private string escapePrefix => $"{Escape}[";
 
-        public Cursor() {}
+        public TextCursor() {}
 
         public void MoveUp(int count = 1) => Console.Write($"{escapePrefix}{count}A");
         
@@ -174,29 +179,14 @@ public class ShellReader : IShellReader, IDebuggable
         public void MoveRight(int count = 1) => Console.Write($"{escapePrefix}{count}C");
         
         public void SetColumn(int count) => Console.Write($"{escapePrefix}{count}G");
-                
+        
+        /* This method is very much a WIP. Right now it causes the shell to hang
+         *  unless it's launched before the prompt is written. 
+         *  Not sure why yet.*/
         public (int row, int col) GetPosition()
         {
-            int row = -1,
-                col = -1;
-
-            Console.Write($"{escapePrefix}6n");
-           
-            ConsoleKeyInfo keyInfo;
-            
-            string output = string.Empty;
-
-            while (Console.KeyAvailable && (keyInfo = Console.ReadKey(true)).KeyChar != 'R')
-            {
-                output += keyInfo.KeyChar;
-                
-            }
-
-            output = output.Substring(2, output.Length - 2);
-            string[] coords = output.Split(';');
-        
-            int.TryParse(coords[0], out row); 
-            int.TryParse(coords[1], out col);
+            int row = Console.CursorTop,
+                col = Console.CursorLeft;
             
             return (row, col);
         
